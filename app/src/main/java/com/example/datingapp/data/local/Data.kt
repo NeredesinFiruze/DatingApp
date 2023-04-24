@@ -41,7 +41,7 @@ val listOfBottomNavItem = listOf(
     ),
     BottomNavItem(
         name = "Chat",
-        route = "chat",
+        route = "chat-list",
         icon = Icons.Default.Notifications,
         badgeCount = 23
     ),
