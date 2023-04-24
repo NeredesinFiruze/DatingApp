@@ -1,6 +1,7 @@
 package com.example.datingapp.presentation.home
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -24,6 +25,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,22 +35,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -106,20 +105,28 @@ fun SearchSection(
     val state: List<UserInfo> by viewModel.userListState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
+
     var turn by remember { mutableStateOf(0) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
+    val isLastUser by remember { derivedStateOf { state.size == turn + 1} }
+
     val offsetX = remember { Animatable(0f) }
     val offsetY = remember { Animatable(0f) }
     var isDragging by remember { mutableStateOf(false) }
-    val layoutDirection = LocalLayoutDirection.current
-    val directionFactor = if (layoutDirection == LayoutDirection.Rtl) -1 else 1
-    val sizePx = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-    val dragSizePx = sizePx * 1.5f
+    var scale by remember { mutableStateOf(1f) }
+    val scaleAnimate by animateFloatAsState(
+        targetValue = scale,
+        animationSpec = tween(500)
+    )
+
+    LaunchedEffect(isDragging){
+        scale = if (isDragging) .9f else 1f
+    }
 
     if (state.isNotEmpty()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .scale(scaleAnimate)
                 .offset {
                     IntOffset(
                         x = (offsetX.value).roundToInt(),
@@ -131,12 +138,8 @@ fun SearchSection(
                         onDragStart = { isDragging = true },
                         onDragEnd = {
                             scope.launch {
-                                if (abs(offsetX.value) > 400) {
-                                    if ( state[turn].picture.size == turn) turn = 0
-                                    else turn++
-                                    println("turn is $turn")
-                                }
-
+                                if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
+                                if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
                                 offsetX.snapTo(0f)
                                 offsetY.snapTo(0f)
                             }
@@ -144,8 +147,8 @@ fun SearchSection(
                         },
                         onDragCancel = {
                             scope.launch {
-                                if (offsetX.value > 400) turn++
-                                if (offsetX.value < -400) turn++
+                                if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
+                                if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
                                 offsetX.snapTo(0f)
                                 offsetY.snapTo(0f)
                             }
@@ -153,18 +156,11 @@ fun SearchSection(
                         },
                         onDrag = { change, dragAmount ->
                             scope.launch {
-                                val newOffsetX = offsetX.value + dragAmount.x * directionFactor
-                                val newOffsetY = offsetY.value + dragAmount.y
                                 change.consume()
-                                offset += dragAmount
-                                if (newOffsetX + newOffsetY < dragSizePx) {
-                                    offsetX.snapTo(newOffsetX)
-                                    offsetY.snapTo(newOffsetY)
-                                } else if (offsetX.value + newOffsetY < dragSizePx) {
-                                    offsetY.snapTo(newOffsetY)
-                                } else if (newOffsetX + offsetY.value < dragSizePx) {
-                                    offsetX.snapTo(newOffsetX)
-                                }
+                                val newOffsetX = offsetX.value + dragAmount.x
+                                val newOffsetY = offsetY.value + dragAmount.y
+                                offsetX.snapTo(newOffsetX)
+                                offsetY.snapTo(newOffsetY)
                             }
                         }
                     )
@@ -173,9 +169,6 @@ fun SearchSection(
                     transformOrigin = if (offsetX.value > 0) TransformOrigin(1f, 1f)
                     else TransformOrigin(0f, 1f)
 
-                    scaleX = if (isDragging) scaleX * .9f else scaleX
-                    scaleY = if (isDragging) scaleY * .9f else scaleY
-                    println(offsetX.value)
                     alpha = 1 - abs(offsetX.value / 3000)
                     rotationZ = if (offsetX.value > 100) {
                         -(100 - abs(offsetX.value)) / 15
