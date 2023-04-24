@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign.Companion.Center
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.datingapp.presentation.on_boarding_screen.OnBoardingViewModel
+import com.example.datingapp.presentation.on_boarding.OnBoardingViewModel
 import com.example.datingapp.ui.theme.GrayNormal
 import java.util.*
 
