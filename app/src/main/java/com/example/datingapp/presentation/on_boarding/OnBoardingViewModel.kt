@@ -1,4 +1,4 @@
-package com.example.datingapp.presentation.on_boarding_screen
+package com.example.datingapp.presentation.on_boarding
 
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
@@ -170,5 +170,10 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                     }
             }
         }
+    }
+
+    val isFrontCamera = mutableStateOf(false)
+    fun rotateCamera() {
+        isFrontCamera.value = !isFrontCamera.value
     }
 }

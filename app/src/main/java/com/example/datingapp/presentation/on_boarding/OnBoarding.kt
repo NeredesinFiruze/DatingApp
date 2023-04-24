@@ -1,6 +1,6 @@
 @file:Suppress("KotlinConstantConditions")
 
-package com.example.datingapp.presentation.on_boarding_screen
+package com.example.datingapp.presentation.on_boarding
 
 import android.Manifest
 import android.content.Context
@@ -84,7 +84,7 @@ fun OnBoarding(navController: NavController, context: Context) {
             .fillMaxSize()
     ) { page ->
         when (page) {
-            0 -> {
+            5 -> {
                 FirstPage(navController) {
                     scope.launch {
                         pagerState.animateScrollToPage(
@@ -139,7 +139,7 @@ fun OnBoarding(navController: NavController, context: Context) {
                 }
             }
 
-            5 -> {
+            0 -> {
                 SixthPage(navController, context = context) {
                     scope.launch {
                         pagerState.animateScrollToPage(

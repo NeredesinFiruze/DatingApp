@@ -25,12 +25,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.datingapp.composables.BottomNavigationBar
 import com.example.datingapp.data.local.listOfBottomNavItem
-import com.example.datingapp.presentation.ChatScreen
+import com.example.datingapp.presentation.chat.ChatListScreen
 import com.example.datingapp.presentation.FilterScreen
 import com.example.datingapp.presentation.home.HomeScreen
 import com.example.datingapp.presentation.SettingsScreen
 import com.example.datingapp.presentation.SplashScreen
-import com.example.datingapp.presentation.on_boarding_screen.OnBoarding
+import com.example.datingapp.presentation.chat.ChatScreen
+import com.example.datingapp.presentation.on_boarding.OnBoarding
 import com.example.datingapp.presentation.sign_in_screen.GoogleAuthUiClient
 import com.example.datingapp.presentation.sign_in_screen.SignInScreen
 import com.example.datingapp.presentation.sign_in_screen.SignInViewModel
@@ -133,8 +134,11 @@ class MainActivity : ComponentActivity() {
             composable("home") {
                 HomeScreen(navController)
             }
+            composable("chat-list") {
+                ChatListScreen(navController)
+            }
             composable("chat") {
-                ChatScreen()
+                ChatScreen(navController)
             }
             composable("settings") {
                 SettingsScreen(
