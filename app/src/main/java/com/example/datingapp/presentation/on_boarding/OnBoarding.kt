@@ -84,7 +84,7 @@ fun OnBoarding(navController: NavController, context: Context) {
             .fillMaxSize()
     ) { page ->
         when (page) {
-            5 -> {
+            0 -> {
                 FirstPage(navController) {
                     scope.launch {
                         pagerState.animateScrollToPage(
@@ -139,7 +139,7 @@ fun OnBoarding(navController: NavController, context: Context) {
                 }
             }
 
-            0 -> {
+            5 -> {
                 SixthPage(navController, context = context) {
                     scope.launch {
                         pagerState.animateScrollToPage(

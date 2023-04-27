@@ -32,33 +32,30 @@ class HomeViewModel @Inject constructor(
 
     private val database = Firebase.database.getReference("users")
     val signInComplete: State<Flow<Boolean?>> = mutableStateOf(dataStoreRepository.readSignIn())
+
     private val _userListState = MutableStateFlow<List<UserInfo>>(emptyList())
     val userListState: StateFlow<List<UserInfo>> = _userListState
 
-    init {
-        getUser()
-        completeSignIn()
-    }
-
-    private fun completeSignIn() {
+    fun completeSignIn() {
         viewModelScope.launch {
             dataStoreRepository.updateSignInResult(true)
         }
     }
 
-    val listOfRelation = mutableListOf<RelationType>()
-    private fun getUser() {
+    private val listOfRelation = mutableListOf<RelationType>()
+    fun getUser() {
         val getData = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val userList = mutableListOf<UserInfo>()
                 for (i in snapshot.children) {
-                    val name = i.child("name").value.toString().fixName()
-                    val interestedGender = i.child("interestedGender").value.toString()
+                    val uid = i.child("userInfo").child("uid").value.toString()
+                    val name = i.child("userInfo").child("name").value.toString().fixName()
+                    val interestedGender = i.child("userInfo").child("interestedGender").value.toString()
                         .firebaseTo().map { it.toGender() }
-                    val relationType = i.child("relationType").value.toString()
+                    val relationType = i.child("userInfo").child("relationType").value.toString()
                         .firebaseTo().map { it.toInt() }
-                    val birthDate = i.child("birthDate").value.toString().calculateAge()
-                    val images = i.child("images").value.toString().firebaseToImageList()
+                    val birthDate = i.child("userInfo").child("birthDate").value.toString().calculateAge()
+                    val images = i.child("userInfo").child("images").value.toString().firebaseToImageList()
 
                     listOfRelationType.forEachIndexed { index, type ->
                         if (relationType.contains(index)) listOfRelation.add(type)
@@ -66,6 +63,7 @@ class HomeViewModel @Inject constructor(
 
                     userList.add(
                         UserInfo(
+                            uid = uid,
                             name = name,
                             birthDate = birthDate,
                             relationType = listOfRelation,

@@ -31,6 +31,7 @@ import com.example.datingapp.presentation.home.HomeScreen
 import com.example.datingapp.presentation.SettingsScreen
 import com.example.datingapp.presentation.SplashScreen
 import com.example.datingapp.presentation.chat.ChatScreen
+import com.example.datingapp.presentation.chat.ChatViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoarding
 import com.example.datingapp.presentation.sign_in_screen.GoogleAuthUiClient
 import com.example.datingapp.presentation.sign_in_screen.SignInScreen
@@ -64,6 +65,8 @@ class MainActivity : ComponentActivity() {
                     bottomBar = {
                         if (destination == null ||
                             destination == "sign-in" ||
+                            destination == "splash" ||
+                            destination == "chat" ||
                             destination == "on-boarding") return@Scaffold
                         else{
                             BottomNavigationBar(
@@ -84,9 +87,10 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Navigation(navController: NavHostController,context: Context) {
 
+        val chatViewModel = hiltViewModel<ChatViewModel>()
         NavHost(
             navController = navController,
-            startDestination = "home"
+            startDestination = "splash"
         ) {
             composable("splash"){
                 SplashScreen(navController)
@@ -135,10 +139,10 @@ class MainActivity : ComponentActivity() {
                 HomeScreen(navController)
             }
             composable("chat-list") {
-                ChatListScreen(navController)
+                ChatListScreen(navController,chatViewModel = chatViewModel)
             }
             composable("chat") {
-                ChatScreen(navController)
+                ChatScreen(navController,chatViewModel)
             }
             composable("settings") {
                 SettingsScreen(
@@ -156,4 +160,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

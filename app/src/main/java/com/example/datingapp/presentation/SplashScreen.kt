@@ -38,7 +38,7 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         value = 32
         delay(1.seconds)
-        val destination = if (FirebaseAuth.getInstance().currentUser == null) "sig-in"
+        val destination = if (FirebaseAuth.getInstance().currentUser == null) "sign-in"
                           else if (signIn == true) "home"
                           else "on-boarding"
 

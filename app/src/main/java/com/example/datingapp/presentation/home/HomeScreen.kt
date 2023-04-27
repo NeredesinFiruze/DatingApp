@@ -118,6 +118,11 @@ fun SearchSection(
         animationSpec = tween(500)
     )
 
+    LaunchedEffect(Unit){
+        viewModel.completeSignIn()
+        viewModel.getUser()
+    }
+
     LaunchedEffect(isDragging){
         scale = if (isDragging) .9f else 1f
     }

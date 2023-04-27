@@ -26,7 +26,7 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
 
     private val firebaseStorage = FirebaseStorage.getInstance()
     private val database = Firebase.database
-    private val userId = FirebaseAuth.getInstance().currentUser!!.uid
+    private val userId = FirebaseAuth.getInstance().uid ?: ""
 
     fun saveName(name: String) {
         _userInfo.value = userInfo.value.copy(
@@ -108,6 +108,11 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
         )
     }
 
+    val isFrontCamera = mutableStateOf(false)
+    fun rotateCamera() {
+        isFrontCamera.value = !isFrontCamera.value
+    }
+
     private val references = mutableListOf<String>()
     private val relationTypeCodeList = mutableListOf<Int>()
     private val interestedGenderCodeList = mutableListOf<Int>()
@@ -151,16 +156,17 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
 
                         if (listOfImages.size == index + 1){
                             val user = hashMapOf<String, Any>()
+                            user["uid"] = userId
                             user["images"] = references.toList().ifEmpty { "empty" }
                             user["name"] = _userInfo.value.name
                             user["gender"] = _userInfo.value.gender
                             user["interestedGender"] = interestedGenderCodeList.toList()
                             user["relationType"] = relationTypeCodeList.toList()
                             user["birthDate"] = _userInfo.value.birthDate
-                            println(interestedGenderCodeList.toList())
-                            println(relationTypeCodeList.toList())
+
                             database.getReference("users")
                                 .child(userId)
+                                .child("userInfo")
                                 .setValue(user)
                                 .addOnCompleteListener {task->
                                     if (task.isSuccessful) navController.navigate("home")
@@ -170,10 +176,5 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                     }
             }
         }
-    }
-
-    val isFrontCamera = mutableStateOf(false)
-    fun rotateCamera() {
-        isFrontCamera.value = !isFrontCamera.value
     }
 }

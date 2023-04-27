@@ -2,12 +2,13 @@ package com.example.datingapp.data.local
 
 import android.net.Uri
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 data class UserInfo(
+    val uid: String = "",
     val name: String = "",
     val birthDate: String = "",
     val picture: List<Uri?> = listOf(null,null,null, null, null, null),
@@ -42,14 +43,13 @@ val listOfBottomNavItem = listOf(
     BottomNavItem(
         name = "Chat",
         route = "chat-list",
-        icon = Icons.Default.Notifications,
-        badgeCount = 23
+        icon = Icons.Default.Chat,
+        badgeCount = 0
     ),
     BottomNavItem(
         name = "Settings",
         route = "settings",
-        icon = Icons.Default.Settings,
-        badgeCount = 214
+        icon = Icons.Default.Settings
     )
 )
 
