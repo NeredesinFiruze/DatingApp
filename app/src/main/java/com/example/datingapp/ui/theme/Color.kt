@@ -12,11 +12,14 @@ val GrayNormal =  Color(0xFF7D8592)
 val ContentWhite = Color(0xFFF1F2F4)
 val TextColor = Color(0xFF21252E)
 val PinkColor = Color(0xFFFC2E79)
+val OrangeColor = Color(0xFFFF7654)
+val ChatColor1 = Color(0xFF90CAF9)
+val ChatColor2 = Color(0xFFE0F2F1)
 
 val Brush1 = Brush.horizontalGradient(
     colors = listOf(
         PinkColor,
-        Color(0xFFFF7654)
+        OrangeColor
     )
 )
 
