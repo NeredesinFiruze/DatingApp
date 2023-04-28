@@ -1,9 +1,8 @@
 package com.example.datingapp.presentation.home
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.DataStoreRepository
 import com.example.datingapp.data.local.RelationType
 import com.example.datingapp.data.local.UserInfo
@@ -19,9 +18,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,10 +28,13 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val database = Firebase.database.getReference("users")
-    val signInComplete: State<Flow<Boolean?>> = mutableStateOf(dataStoreRepository.readSignIn())
+    //val signInComplete: State<Flow<Boolean?>> = mutableStateOf(dataStoreRepository.readSignIn())
 
-    private val _userListState = MutableStateFlow<List<UserInfo>>(emptyList())
-    val userListState: StateFlow<List<UserInfo>> = _userListState
+    var userListState = MutableStateFlow<List<UserInfo>>(emptyList())
+        private set
+
+    var userConnectionStatus = MutableStateFlow<List<ConnectionInfo>>(emptyList())
+        private set
 
     fun completeSignIn() {
         viewModelScope.launch {
@@ -47,15 +47,21 @@ class HomeViewModel @Inject constructor(
         val getData = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val userList = mutableListOf<UserInfo>()
+                val connectionList = mutableListOf<ConnectionInfo>()
                 for (i in snapshot.children) {
                     val uid = i.child("userInfo").child("uid").value.toString()
                     val name = i.child("userInfo").child("name").value.toString().fixName()
                     val interestedGender = i.child("userInfo").child("interestedGender").value.toString()
-                        .firebaseTo().map { it.toGender() }
+                            .firebaseTo().map { it.toGender() }
                     val relationType = i.child("userInfo").child("relationType").value.toString()
                         .firebaseTo().map { it.toInt() }
                     val birthDate = i.child("userInfo").child("birthDate").value.toString().calculateAge()
                     val images = i.child("userInfo").child("images").value.toString().firebaseToImageList()
+
+                    val connectionData = i.child("connectionStatus").getValue(ConnectionInfo::class.java)
+                    connectionData?.let {
+                        connectionList.add(it)
+                    }
 
                     listOfRelationType.forEachIndexed { index, type ->
                         if (relationType.contains(index)) listOfRelation.add(type)
@@ -73,7 +79,8 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
-                _userListState.value = userList
+                userListState.value = userList
+                userConnectionStatus.value = connectionList.toList()
             }
 
             override fun onCancelled(error: DatabaseError) {

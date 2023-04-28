@@ -79,3 +79,8 @@ val listOfRelationType: List<RelationType> = listOf(
         desc = "henüz karar vermedim"
     )
 )
+
+data class ConnectionInfo(
+    val connectionStatus: Boolean = false,
+    val lastConnected: String? = null,
+)

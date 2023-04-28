@@ -9,6 +9,16 @@ import java.util.Locale
 
 object Extensions {
 
+    fun Long.calculateDate(): String?{
+        val now = System.currentTimeMillis()
+        val difference = now - this
+
+        if (difference / (1000 * 3600 * 24) > 7)return null
+        if (difference / (1000 * 3600 * 24) > 1) return "active recently"
+        if (difference / (1000 * 3600) > 1) return "active ${difference / (1000 * 3600)} hour ago"
+        return "active less than hour ago"
+    }
+
     fun String.toGender(): Gender {
         if (this == "0") return Gender.MALE
         if (this == "1") return Gender.FEMALE

@@ -3,6 +3,7 @@ package com.example.datingapp.presentation.home
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -12,11 +13,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,8 +37,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -54,7 +62,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.datingapp.R
+import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.UserInfo
+import com.example.datingapp.util.Extensions.calculateDate
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -103,11 +113,12 @@ fun SearchSection(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state: List<UserInfo> by viewModel.userListState.collectAsStateWithLifecycle()
+    val stateConnectionInfo: List<ConnectionInfo> by viewModel.userConnectionStatus.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
 
     var turn by remember { mutableStateOf(0) }
-    val isLastUser by remember { derivedStateOf { state.size == turn + 1} }
+    val isLastUser by remember { derivedStateOf { state.size == turn + 1 } }
 
     val offsetX = remember { Animatable(0f) }
     val offsetY = remember { Animatable(0f) }
@@ -118,12 +129,12 @@ fun SearchSection(
         animationSpec = tween(500)
     )
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         viewModel.completeSignIn()
         viewModel.getUser()
     }
 
-    LaunchedEffect(isDragging){
+    LaunchedEffect(isDragging) {
         scale = if (isDragging) .9f else 1f
     }
 
@@ -171,14 +182,14 @@ fun SearchSection(
                     )
                 }
                 .graphicsLayer {
-                    transformOrigin = if (offsetX.value > 0) TransformOrigin(1f, 1f)
-                    else TransformOrigin(0f, 1f)
+                    transformOrigin = if (offsetX.value > 0) TransformOrigin(1f, 0f)
+                    else TransformOrigin(0f, 0f)
 
                     alpha = 1 - abs(offsetX.value / 3000)
                     rotationZ = if (offsetX.value > 100) {
-                        -(100 - abs(offsetX.value)) / 15
-                    } else if (offsetX.value < -100) {
                         (100 - abs(offsetX.value)) / 15
+                    } else if (offsetX.value < -100) {
+                        -(100 - abs(offsetX.value)) / 15
                     } else 0f
                 }
         ) {
@@ -191,33 +202,68 @@ fun SearchSection(
                     .fillMaxSize()
                     .padding(4.dp)
                     .clip(RoundedCornerShape(8.dp))
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color.Black,
+                                )
+                            ),
+                            size = Size(size.width, size.height)
+                        )
+                    }
             ) { page ->
-                AsyncImage(
-                    model = state[turn].picture[page],
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                if (it.x > size.width / 2) {
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(
-                                            page = page + 1,
-                                            animationSpec = tween(500)
-                                        )
-                                    }
-                                } else {
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(
-                                            page = if (page != 0) page - 1 else return@launch,
-                                            animationSpec = tween(500)
-                                        )
+                Box(Modifier.fillMaxSize()) {
+                    AsyncImage(
+                        model = state[turn].picture[page],
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    if (it.x > size.width / 2) {
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(
+                                                page = page + 1,
+                                                animationSpec = tween(500)
+                                            )
+                                        }
+                                    } else {
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(
+                                                page = if (page != 0) page - 1 else return@launch,
+                                                animationSpec = tween(500)
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
-                )
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.nope),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .alpha(-offsetX.value / 300)
+                            .rotate(45f)
+                            .size(180.dp)
+                            .align(Alignment.TopEnd)
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.like),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .alpha(offsetX.value / 300)
+                            .rotate(-45f)
+                            .size(180.dp)
+                            .align(Alignment.TopStart)
+                    )
+                }
             }
             Column(
                 modifier = Modifier
@@ -247,7 +293,33 @@ fun SearchSection(
                     }
                     Text(text = text)
                 }
-                /*TODO("eksik")*/
+                if (stateConnectionInfo[turn].connectionStatus) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(modifier = Modifier.size(10.dp)) {
+                            drawCircle(Color.Green)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Online",
+                            color = Color.White
+                        )
+                    }
+                }else{
+                    stateConnectionInfo[turn].lastConnected?.let {
+                        it.toLong().calculateDate()?.let {date ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Canvas(modifier = Modifier.size(10.dp)) {
+                                    drawCircle(Color.Gray)
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = date,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
