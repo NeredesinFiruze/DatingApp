@@ -1,5 +1,6 @@
 package com.example.datingapp.presentation.home
 
+import android.content.Context
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,18 +66,20 @@ import coil.compose.AsyncImage
 import com.example.datingapp.R
 import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.UserInfo
+import com.example.datingapp.util.Extensions.calculateAge
 import com.example.datingapp.util.Extensions.calculateDate
+import com.example.datingapp.util.Extensions.fixName
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, context: Context) {
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
         TopSection(navController)
-        SearchSection()
+        SearchSection(context)
     }
 }
 
@@ -110,10 +114,12 @@ fun TopSection(navController: NavController) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchSection(
+    context: Context,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state: List<UserInfo> by viewModel.userListState.collectAsStateWithLifecycle()
     val stateConnectionInfo: List<ConnectionInfo> by viewModel.userConnectionStatus.collectAsStateWithLifecycle()
+
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
 
@@ -130,7 +136,7 @@ fun SearchSection(
     )
 
     LaunchedEffect(Unit) {
-        viewModel.completeSignIn()
+        viewModel.completeSignIn(true)
         viewModel.getUser()
     }
 
@@ -279,7 +285,7 @@ fun SearchSection(
                                 color = Color.White,
                             )
                         ) {
-                            append(state[turn].name + " ")
+                            append(state[turn].name.fixName() + " ")
                         }
                         withStyle(
                             style = SpanStyle(
@@ -288,7 +294,7 @@ fun SearchSection(
                                 color = Color.White
                             )
                         ) {
-                            append(state[turn].birthDate)
+                            append(state[turn].birthDate.calculateAge())
                         }
                     }
                     Text(text = text)
@@ -300,13 +306,13 @@ fun SearchSection(
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Online",
+                            text = "Online now",
                             color = Color.White
                         )
                     }
-                }else{
+                } else {
                     stateConnectionInfo[turn].lastConnected?.let {
-                        it.toLong().calculateDate()?.let {date ->
+                        it.toLong().calculateDate()?.let { date ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Canvas(modifier = Modifier.size(10.dp)) {
                                     drawCircle(Color.Gray)
@@ -319,6 +325,17 @@ fun SearchSection(
                             }
                         }
                     }
+                }
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                    Text(
+                        text = viewModel.getCityName(turn,context),
+                        color = Color.White
+                    )
                 }
             }
         }
