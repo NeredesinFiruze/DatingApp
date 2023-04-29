@@ -56,6 +56,8 @@ import com.example.datingapp.composables.rememberImeState
 import com.example.datingapp.ui.theme.GrayLight
 import com.example.datingapp.ui.theme.GrayNormal
 import com.example.datingapp.ui.theme.PinkColor
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.Executors
@@ -85,7 +87,7 @@ fun OnBoarding(navController: NavController, context: Context) {
     ) { page ->
         when (page) {
             0 -> {
-                FirstPage(navController) {
+                FirstPage(navController, context = context) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = page + 1,
@@ -153,21 +155,40 @@ fun OnBoarding(navController: NavController, context: Context) {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FirstPage(
     navController: NavController,
     viewModel: OnBoardingViewModel = hiltViewModel(),
+    context: Context,
     pageClick: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val imeState = rememberImeState()
     val focusState = LocalFocusManager.current
 
+    val permissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
     LaunchedEffect(key1 = imeState.value) {
         if (imeState.value) {
             scrollState.scrollTo(Int.MAX_VALUE)
         }
     }
+
+    SideEffect {
+        permissionsState.launchMultiplePermissionRequest()
+    }
+    if(permissionsState.allPermissionsGranted){
+        viewModel.setLocation(context)
+    }
+
+
+
 
     Box(
         modifier = Modifier
@@ -291,19 +312,19 @@ fun ThirdPage(
             )
             Spacer(modifier = Modifier.height(60.dp))
 
-            Gender.values().forEach {
-                if (it != Gender.NONE) {
+            Gender.values().forEachIndexed { index, gender ->
+                if (gender != Gender.NONE) {
                     CustomButton(
-                        text = it.name,
-                        enabled = it == viewModel.userInfo.value.gender,
+                        text = gender.name,
+                        enabled = index == viewModel.userInfo.value.gender,
                         onClick = {
-                            viewModel.yourGender(it)
+                            viewModel.yourGender(index)
                         }
                     )
                 }
             }
         }
-        val condition = viewModel.userInfo.value.gender != Gender.NONE
+        val condition = viewModel.userInfo.value.gender != -1
         CustomButton(
             text = "NEXT",
             modifier = Modifier
@@ -335,13 +356,13 @@ fun FourthPage(
             )
             Spacer(modifier = Modifier.height(60.dp))
 
-            Gender.values().forEach {
-                if (it != Gender.NONE) {
+            Gender.values().forEachIndexed { index, gender ->
+                if (gender != Gender.NONE) {
                     CustomButton(
-                        text = it.name,
-                        enabled = viewModel.userInfo.value.interestedGender.contains(it)
+                        text = gender.name,
+                        enabled = viewModel.userInfo.value.interestedGender.contains(index)
                     ) {
-                        viewModel.showMe(it)
+                        viewModel.showMe(index)
                     }
                 }
             }
@@ -374,9 +395,9 @@ fun FifthPage(
                 listOfRelationType.forEachIndexed { index, it ->
                     if (index <= 2)
                         Block(
-                            enable = viewModel.userInfo.value.relationType.contains(it),
+                            enable = viewModel.userInfo.value.relationType.contains(index),
                             onClick = {
-                                viewModel.chooseRelationType(it)
+                                viewModel.chooseRelationType(index)
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -400,9 +421,9 @@ fun FifthPage(
                 listOfRelationType.forEachIndexed { index, it ->
                     if (index > 2)
                         Block(
-                            enable = viewModel.userInfo.value.relationType.contains(it),
+                            enable = viewModel.userInfo.value.relationType.contains(index),
                             onClick = {
-                                viewModel.chooseRelationType(it)
+                                viewModel.chooseRelationType(index)
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -440,6 +461,9 @@ fun SixthPage(
     context: Context,
     pageClick: () -> Unit,
 ) {
+//    LaunchedEffect(Unit){
+//        viewModel.test()
+//    }
     val cameraExecutor = Executors.newSingleThreadExecutor()!!
     val shouldShowCamera = remember { mutableStateOf(false) }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(

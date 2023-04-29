@@ -1,6 +1,5 @@
 package com.example.datingapp.data.local
 
-import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
@@ -11,11 +10,12 @@ data class UserInfo(
     val uid: String = "",
     val name: String = "",
     val birthDate: String = "",
-    val picture: List<Uri?> = listOf(null,null,null, null, null, null),
-    val gender: Gender = Gender.NONE,
-    val interestedGender: List<Gender> = emptyList(),
+    val picture: List<String?> = listOf(null,null,null, null, null, null),
+    val gender: Int = -1,
+    val interestedGender: List<Int> = emptyList(),
     val interestedAge: IntRange? = null,
-    val relationType: List<RelationType> = emptyList(),
+    val relationType: List<Int> = emptyList(),
+    val locationInfo: List<Double> = emptyList()
 )
 
 enum class Gender{
