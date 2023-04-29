@@ -33,16 +33,14 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private val auth by lazy {
-        FirebaseAuth.getInstance()
-    }
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
     private fun observeConnectionStatus() {
-        if (auth.currentUser?.uid.isNullOrEmpty()) return
 
+        if (userId.isNullOrEmpty())return
         val database = FirebaseDatabase.getInstance()
         val path = database.getReference("users")
-            .child(auth.currentUser!!.uid)
+            .child(userId)
             .child("connectionStatus")
 
         path.setValue(ConnectionInfo(true, null))
