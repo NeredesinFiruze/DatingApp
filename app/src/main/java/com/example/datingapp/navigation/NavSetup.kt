@@ -23,6 +23,7 @@ import com.example.datingapp.presentation.chat.ChatListScreen
 import com.example.datingapp.presentation.chat.ChatScreen
 import com.example.datingapp.presentation.chat.ChatViewModel
 import com.example.datingapp.presentation.home.HomeScreen
+import com.example.datingapp.presentation.home.HomeViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoarding
 import com.example.datingapp.presentation.sign_in_screen.GoogleAuthUiClient
 import com.example.datingapp.presentation.sign_in_screen.SignInScreen
@@ -88,7 +89,7 @@ fun NavSetup(
             OnBoarding(navController, context)
         }
         composable(Screen.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController, context)
         }
         composable(Screen.Chat.route) {
             ChatScreen(navController, chatViewModel)
@@ -100,8 +101,11 @@ fun NavSetup(
             FilterScreen()
         }
         composable(Screen.Settings.route) {
+            val homeViewModel = hiltViewModel<HomeViewModel>()
+
             SettingsScreen(
                 onSignOut = {
+                    homeViewModel.completeSignIn(false)
                     scope.launch {
                         googleAuthUiClient.signOut()
                     }
