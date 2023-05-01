@@ -21,6 +21,9 @@ class ChatViewModel@Inject constructor(): ViewModel() {
     private val _messages = MutableStateFlow<List<MessageData>>(emptyList())
     val messages: StateFlow<List<MessageData>> = _messages
 
+    private val _lastMessage = MutableStateFlow<List<MessageData>>(emptyList())
+    val lastMessage: StateFlow<List<MessageData>> = _lastMessage
+
     val userInfo = mutableStateOf(UserInfo())
     private val database = Firebase.database.getReference("users")
     val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -52,11 +55,35 @@ class ChatViewModel@Inject constructor(): ViewModel() {
         })
     }
 
+    fun getLastMessages(){
+        if (userId.isNullOrEmpty())return
+
+        val databaseRef = FirebaseDatabase.getInstance().getReference("users")
+            .child(userId)
+            .child("lastMessage")
+        databaseRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val lastMessage = mutableListOf<MessageData>()
+                for (lastMessageSnapshot in dataSnapshot.children) {
+
+                    val messageData = lastMessageSnapshot.getValue(MessageData::class.java)
+                    messageData?.let {
+                        lastMessage.add(it)
+                    }
+                }
+                _lastMessage.value = lastMessage.toList()
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) = Unit
+        })
+    }
+
     fun sendMessage(message: String){
         if (userId.isNullOrEmpty())return
 
         val user = hashMapOf<String, String>()
         user["from"] = userId
+        user["to"] = userInfo.value.uid
         user["message"] = message
         user["timestamp"] = System.currentTimeMillis().toString()
 
@@ -73,11 +100,24 @@ class ChatViewModel@Inject constructor(): ViewModel() {
             .child(userId)
             .push()
             .setValue(user)
+
+        database
+            .child(userId)
+            .child("lastMessage")
+            .child(userInfo.value.uid)
+            .setValue(user)
+
+        database
+            .child(userInfo.value.uid)
+            .child("lastMessage")
+            .child(userId)
+            .setValue(user)
     }
 }
 
 data class MessageData(
     val from: String = "",
+    val to: String = "",
     val message: String = "",
     // This timestamp extends from firebase
     val timestamp: String = System.currentTimeMillis().toString(),
