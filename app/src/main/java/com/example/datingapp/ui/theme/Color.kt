@@ -29,3 +29,13 @@ val TransparentBrush = Brush.horizontalGradient(
         Color.Transparent
     )
 )
+
+val MaskBrush = Brush.verticalGradient(
+    listOf(
+        Color.Transparent,
+        Color.Transparent,
+        Color.Transparent,
+        Color.Transparent,
+        Color.Black,
+    )
+)
