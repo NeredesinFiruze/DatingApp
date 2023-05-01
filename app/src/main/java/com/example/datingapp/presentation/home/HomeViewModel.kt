@@ -46,9 +46,9 @@ class HomeViewModel @Inject constructor(
         val address = geoCoder.getFromLocation(
             userListState.value[turn].locationInfo.first(),
             userListState.value[turn].locationInfo.last(),
-            3
+            1
         )
-        return address?.get(0)?.locality ?: "olmadı"
+        return address?.get(0)?.locality ?: "NOT_FOUND_LOCATION"
     }
 
     fun getUser() {

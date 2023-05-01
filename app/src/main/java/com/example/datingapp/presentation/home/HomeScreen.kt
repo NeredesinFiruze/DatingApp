@@ -2,13 +2,11 @@ package com.example.datingapp.presentation.home
 
 import android.content.Context
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,7 +28,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,12 +39,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -56,7 +48,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -66,12 +57,12 @@ import coil.compose.AsyncImage
 import com.example.datingapp.R
 import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.UserInfo
+import com.example.datingapp.ui.theme.MaskBrush
+import com.example.datingapp.util.Extensions.animateSwipe
 import com.example.datingapp.util.Extensions.calculateAge
 import com.example.datingapp.util.Extensions.calculateDate
 import com.example.datingapp.util.Extensions.fixName
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(navController: NavController, context: Context) {
@@ -121,82 +112,25 @@ fun SearchSection(
     val stateConnectionInfo: List<ConnectionInfo> by viewModel.userConnectionStatus.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState()
-    val scope = rememberCoroutineScope()
-
-    var turn by remember { mutableStateOf(0) }
-    val isLastUser by remember { derivedStateOf { state.size == turn + 1 } }
-
     val offsetX = remember { Animatable(0f) }
-    val offsetY = remember { Animatable(0f) }
-    var isDragging by remember { mutableStateOf(false) }
-    var scale by remember { mutableStateOf(1f) }
-    val scaleAnimate by animateFloatAsState(
-        targetValue = scale,
-        animationSpec = tween(500)
-    )
+    val scope = rememberCoroutineScope()
+    var turn by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
         viewModel.completeSignIn(true)
         viewModel.getUser()
     }
 
-    LaunchedEffect(isDragging) {
-        scale = if (isDragging) .9f else 1f
-    }
-
     if (state.isNotEmpty()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .scale(scaleAnimate)
-                .offset {
-                    IntOffset(
-                        x = (offsetX.value).roundToInt(),
-                        y = (offsetY.value).roundToInt()
-                    )
-                }
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { isDragging = true },
-                        onDragEnd = {
-                            scope.launch {
-                                if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
-                                if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
-                                offsetX.snapTo(0f)
-                                offsetY.snapTo(0f)
-                            }
-                            isDragging = false
-                        },
-                        onDragCancel = {
-                            scope.launch {
-                                if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
-                                if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
-                                offsetX.snapTo(0f)
-                                offsetY.snapTo(0f)
-                            }
-                            isDragging = false
-                        },
-                        onDrag = { change, dragAmount ->
-                            scope.launch {
-                                change.consume()
-                                val newOffsetX = offsetX.value + dragAmount.x
-                                val newOffsetY = offsetY.value + dragAmount.y
-                                offsetX.snapTo(newOffsetX)
-                                offsetY.snapTo(newOffsetY)
-                            }
-                        }
-                    )
-                }
-                .graphicsLayer {
-                    transformOrigin = if (offsetX.value > 0) TransformOrigin(1f, 0f)
-                    else TransformOrigin(0f, 0f)
-
-                    alpha = 1 - abs(offsetX.value / 3000)
-                    rotationZ = if (offsetX.value > 100) {
-                        (100 - abs(offsetX.value)) / 15
-                    } else if (offsetX.value < -100) {
-                        -(100 - abs(offsetX.value)) / 15
-                    } else 0f
+                .animateSwipe(state.size) {turnValue, newOffset->
+                    println(turnValue)
+                    turn = turnValue
+                    scope.launch {
+                        offsetX.snapTo(newOffset)
+                    }
                 }
         ) {
             HorizontalPager(
@@ -211,15 +145,7 @@ fun SearchSection(
                     .drawWithContent {
                         drawContent()
                         drawRect(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Transparent,
-                                    Color.Transparent,
-                                    Color.Transparent,
-                                    Color.Black,
-                                )
-                            ),
+                            brush = MaskBrush,
                             size = Size(size.width, size.height)
                         )
                     }
