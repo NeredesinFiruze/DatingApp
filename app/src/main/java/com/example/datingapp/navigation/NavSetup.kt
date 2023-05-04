@@ -1,6 +1,7 @@
 package com.example.datingapp.navigation
 
 import android.content.Context
+import android.telephony.TelephonyManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,16 +26,18 @@ import com.example.datingapp.presentation.chat.ChatViewModel
 import com.example.datingapp.presentation.home.HomeScreen
 import com.example.datingapp.presentation.home.HomeViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoarding
-import com.example.datingapp.presentation.sign_in_screen.GoogleAuthUiClient
+import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.GoogleAuthUiClient
 import com.example.datingapp.presentation.sign_in_screen.SignInScreen
 import com.example.datingapp.presentation.sign_in_screen.SignInViewModel
+import com.example.datingapp.presentation.sign_in_screen.sign_in_with_phone.SignInWithPhone
 import kotlinx.coroutines.launch
 
 @Composable
 fun NavSetup(
     navController: NavHostController,
     context: Context,
-    googleAuthUiClient: GoogleAuthUiClient
+    googleAuthUiClient: GoogleAuthUiClient,
+    telephonyManager: TelephonyManager
 ) {
     val chatViewModel = hiltViewModel<ChatViewModel>()
     val scope = rememberCoroutineScope()
@@ -73,6 +76,7 @@ fun NavSetup(
             }
             SignInScreen(
                 state = state,
+                navController = navController,
                 onSignInClick = {
                     scope.launch {
                         val signInIntentSender = googleAuthUiClient.signIn()
@@ -84,6 +88,9 @@ fun NavSetup(
                     }
                 }
             )
+        }
+        composable(Screen.SignInPhone.route) {
+            SignInWithPhone(navController,telephonyManager,context)
         }
         composable(Screen.OnBoarding.route) {
             OnBoarding(navController, context)

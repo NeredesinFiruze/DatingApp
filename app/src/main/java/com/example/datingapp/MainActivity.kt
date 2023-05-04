@@ -1,6 +1,8 @@
 package com.example.datingapp
 
+import android.content.Context
 import android.os.Bundle
+import android.telephony.TelephonyManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -13,7 +15,7 @@ import com.example.datingapp.composables.BottomNavigationBar
 import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.listOfBottomNavItem
 import com.example.datingapp.navigation.NavSetup
-import com.example.datingapp.presentation.sign_in_screen.GoogleAuthUiClient
+import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.GoogleAuthUiClient
 import com.example.datingapp.ui.theme.DateFlirtAppTheme
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.auth.FirebaseAuth
@@ -32,6 +34,8 @@ class MainActivity : ComponentActivity() {
             Identity.getSignInClient(applicationContext)
         )
     }
+
+    val telephonyManager by lazy { getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager }
 
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -63,7 +67,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         observeConnectionStatus()
-
         setContent {
             DateFlirtAppTheme {
                 val navController = rememberNavController()
@@ -90,7 +93,8 @@ class MainActivity : ComponentActivity() {
                         NavSetup(
                             navController = navController,
                             context = this@MainActivity,
-                            googleAuthUiClient = googleAuthUiClient
+                            googleAuthUiClient = googleAuthUiClient,
+                            telephonyManager = telephonyManager
                         )
                     }
                 }

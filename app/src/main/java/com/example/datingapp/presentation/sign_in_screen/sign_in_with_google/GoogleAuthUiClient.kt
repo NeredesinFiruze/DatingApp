@@ -1,9 +1,11 @@
-package com.example.datingapp.presentation.sign_in_screen
+package com.example.datingapp.presentation.sign_in_screen.sign_in_with_google
 
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import com.example.datingapp.R
+import com.example.datingapp.presentation.sign_in_screen.SignInResult
+import com.example.datingapp.presentation.sign_in_screen.UserData
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -72,13 +74,13 @@ class GoogleAuthUiClient(
         }
     }
 
-    fun getSignInUser(): UserData? = auth.currentUser?.run {
-        UserData(
-            userId = uid,
-            userName = displayName,
-            profilePictureUrl = photoUrl.toString()
-        )
-    }
+//    fun getSignInUser(): UserData? = auth.currentUser?.run {
+//        UserData(
+//            userId = uid,
+//            userName = displayName,
+//            profilePictureUrl = photoUrl.toString()
+//        )
+//    }
 
     private fun buildSignInRequest(): BeginSignInRequest{
         return BeginSignInRequest.Builder()

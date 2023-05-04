@@ -184,7 +184,6 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                         references.add(it.toString())
 
                         if (listOfImages.size == index + 1) {//if all image downloaded, do that below
-                            println(references.toList())
                             _userInfo.value = userInfo.value.copy(
                                 picture = references.toList(),
                                 uid = userId

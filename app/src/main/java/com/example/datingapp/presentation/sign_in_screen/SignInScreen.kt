@@ -32,12 +32,17 @@ import androidx.compose.ui.text.style.TextAlign.Companion.Center
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.datingapp.R
+import com.example.datingapp.navigation.Screen
+import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.SignInState
+import com.example.datingapp.ui.theme.Brush2
 import com.example.datingapp.ui.theme.ContentWhite
 
 @Composable
 fun SignInScreen(
     state: SignInState,
+    navController: NavController,
     onSignInClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -52,8 +57,9 @@ fun SignInScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Brush2)
             .padding(16.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.BottomCenter
     ) {
         Column {
             RowButton(
@@ -64,10 +70,10 @@ fun SignInScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             RowButton(
-                text = "Sign In with Email",
+                text = "Sign In with Phone",
                 width = (screenWidth / 1.5).dp,
                 icon = Icons.Default.Email,
-                onClick = {}
+                onClick = {navController.navigate(Screen.SignInPhone.route)}
             )
         }
     }

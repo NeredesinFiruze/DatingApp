@@ -23,6 +23,13 @@ val Brush1 = Brush.horizontalGradient(
     )
 )
 
+val Brush2 = Brush.verticalGradient(
+    colors = listOf(
+        OrangeColor,
+        PinkColor
+    )
+)
+
 val TransparentBrush = Brush.horizontalGradient(
     colors = listOf(
         Color.Transparent,
