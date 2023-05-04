@@ -48,7 +48,12 @@ class HomeViewModel @Inject constructor(
             userListState.value[turn].locationInfo.last(),
             1
         )
-        return address?.get(0)?.locality ?: "NOT_FOUND_LOCATION"
+        return try {
+            address?.get(0)?.locality ?: "NOT_FOUND_LOCATION"
+        }
+        catch (e: Exception){
+            "NOT_FOUND_LOCATION"
+        }
     }
 
     fun getUser() {

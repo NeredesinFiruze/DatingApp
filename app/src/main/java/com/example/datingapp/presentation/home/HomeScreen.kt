@@ -50,13 +50,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.datingapp.R
-import com.example.datingapp.data.local.ConnectionInfo
-import com.example.datingapp.data.local.UserInfo
 import com.example.datingapp.ui.theme.MaskBrush
 import com.example.datingapp.util.Extensions.animateSwipe
 import com.example.datingapp.util.Extensions.calculateAge
@@ -102,19 +101,18 @@ fun TopSection(navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchSection(
     context: Context,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val state: List<UserInfo> by viewModel.userListState.collectAsStateWithLifecycle()
-    val stateConnectionInfo: List<ConnectionInfo> by viewModel.userConnectionStatus.collectAsStateWithLifecycle()
+    val state by viewModel.userListState.collectAsStateWithLifecycle()
 
-    val pagerState = rememberPagerState()
-    val offsetX = remember { Animatable(0f) }
-    val scope = rememberCoroutineScope()
-    var turn by remember { mutableStateOf(0) }
+    var zIndex1 by remember { mutableStateOf(5f) }
+    var zIndex2 by remember { mutableStateOf(4f) }
+    var zIndex3 by remember { mutableStateOf(3f) }
+    var zIndex4 by remember { mutableStateOf(2f) }
+    var zIndex5 by remember { mutableStateOf(1f) }
 
     LaunchedEffect(Unit) {
         viewModel.completeSignIn(true)
@@ -122,147 +120,215 @@ fun SearchSection(
     }
 
     if (state.isNotEmpty()) {
-        Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            if (state.size > 4)
+            UserItem(context, 4, Modifier.zIndex(zIndex5)) {
+                zIndex1 = 5f
+                zIndex2 = 4f
+                zIndex3 = 3f
+                zIndex4 = 2f
+                zIndex5 = 1f
+            }
+
+            if (state.size > 3)
+            UserItem(context, 3, Modifier.zIndex(zIndex4)) {
+                zIndex1 = 1f
+                zIndex2 = 2f
+                zIndex3 = 3f
+                zIndex4 = 4f
+                zIndex5 = 5f
+            }
+
+            if (state.size > 2)
+            UserItem(context, 2, Modifier.zIndex(zIndex3)) {
+                zIndex1 = 3f
+                zIndex2 = 2f
+                zIndex3 = 1f
+                zIndex4 = 5f
+                zIndex5 = 4f
+            }
+
+            if (state.size > 1)
+            UserItem(context, 1, Modifier.zIndex(zIndex2)) {
+                zIndex1 = 2f
+                zIndex2 = 1f
+                zIndex3 = 5f
+                zIndex4 = 4f
+                zIndex5 = 3f
+            }
+
+            UserItem(context, 0, Modifier.zIndex(zIndex1)) {
+                zIndex1 = 1f
+                zIndex2 = 5f
+                zIndex3 = 4f
+                zIndex4 = 3f
+                zIndex5 = 2f
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun UserItem(
+    context: Context,
+    turnStart: Int,
+    modifier: Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+    onChange: () -> Unit,
+) {
+    val state by viewModel.userListState.collectAsStateWithLifecycle()
+    val stateConnectionInfo by viewModel.userConnectionStatus.collectAsStateWithLifecycle()
+
+    val pagerState = rememberPagerState()
+    val offsetX = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var turn by remember { mutableStateOf(turnStart) }
+
+    LaunchedEffect(key1 = turn) {
+        onChange()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .animateSwipe(state.size, turnStart) { turnValue, newOffset ->
+                turn = turnValue
+                scope.launch {
+                    offsetX.snapTo(newOffset)
+                }
+            }
+            .then(modifier)
+    ) {
+        HorizontalPager(
+            pageCount = state[turn].picture.size,
+            state = pagerState,
+            userScrollEnabled = false,
             modifier = Modifier
                 .fillMaxSize()
-                .animateSwipe(state.size) {turnValue, newOffset->
-                    println(turnValue)
-                    turn = turnValue
-                    scope.launch {
-                        offsetX.snapTo(newOffset)
-                    }
+                .padding(4.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .drawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = MaskBrush,
+                        size = Size(size.width, size.height)
+                    )
                 }
-        ) {
-            HorizontalPager(
-                pageCount = state[turn].picture.size,
-                state = pagerState,
-                userScrollEnabled = false,
-                beyondBoundsPageCount = 2,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(
-                            brush = MaskBrush,
-                            size = Size(size.width, size.height)
-                        )
-                    }
-            ) { page ->
-                Box(Modifier.fillMaxSize()) {
-                    AsyncImage(
-                        model = state[turn].picture[page],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectTapGestures {
-                                    if (it.x > size.width / 2) {
-                                        scope.launch {
-                                            pagerState.animateScrollToPage(
-                                                page = page + 1,
-                                                animationSpec = tween(500)
-                                            )
-                                        }
-                                    } else {
-                                        scope.launch {
-                                            pagerState.animateScrollToPage(
-                                                page = if (page != 0) page - 1 else return@launch,
-                                                animationSpec = tween(500)
-                                            )
-                                        }
+        ) { page ->
+            Box(Modifier.fillMaxSize()) {
+                AsyncImage(
+                    model = state[turn].picture[page],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                if (it.x > size.width / 2) {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(
+                                            page = page + 1,
+                                            animationSpec = tween(500)
+                                        )
+                                    }
+                                } else {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(
+                                            page = if (page != 0) page - 1 else return@launch,
+                                            animationSpec = tween(500)
+                                        )
                                     }
                                 }
                             }
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.nope),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .alpha(-offsetX.value / 300)
-                            .rotate(45f)
-                            .size(180.dp)
-                            .align(Alignment.TopEnd)
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.like),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .alpha(offsetX.value / 300)
-                            .rotate(-45f)
-                            .size(180.dp)
-                            .align(Alignment.TopStart)
-                    )
-                }
+                        }
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.nope),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .alpha(-offsetX.value / 300)
+                        .rotate(45f)
+                        .size(180.dp)
+                        .align(Alignment.TopEnd)
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.like),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .alpha(offsetX.value / 300)
+                        .rotate(-45f)
+                        .size(180.dp)
+                        .align(Alignment.TopStart)
+                )
             }
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .align(Alignment.BottomStart)
-            ) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    val text = buildAnnotatedString {
-                        withStyle(
-                            style = SpanStyle(
-                                fontSize = 42.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                            )
-                        ) {
-                            append(state[turn].name.fixName() + " ")
-                        }
-                        withStyle(
-                            style = SpanStyle(
-                                fontSize = 31.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = Color.White
-                            )
-                        ) {
-                            append(state[turn].birthDate.calculateAge())
-                        }
+        }
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.BottomStart)
+        ) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                val text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                    ) {
+                        append(state[turn].name.fixName() + " ")
                     }
-                    Text(text = text)
-                }
-                if (stateConnectionInfo[turn].connectionStatus) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Canvas(modifier = Modifier.size(10.dp)) {
-                            drawCircle(Color.Green)
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Online now",
+                    withStyle(
+                        style = SpanStyle(
+                            fontSize = 31.sp,
+                            fontWeight = FontWeight.Normal,
                             color = Color.White
                         )
-                    }
-                } else {
-                    stateConnectionInfo[turn].lastConnected?.let {
-                        it.toLong().calculateDate()?.let { date ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Canvas(modifier = Modifier.size(10.dp)) {
-                                    drawCircle(Color.Gray)
-                                }
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = date,
-                                    color = Color.White
-                                )
-                            }
-                        }
+                    ) {
+                        append(state[turn].birthDate.calculateAge())
                     }
                 }
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
+                Text(text = text)
+            }
+            if (stateConnectionInfo[turn].connectionStatus) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Canvas(modifier = Modifier.size(10.dp)) {
+                        drawCircle(Color.Green)
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = viewModel.getCityName(turn,context),
+                        text = "Online now",
                         color = Color.White
                     )
                 }
+            } else {
+                stateConnectionInfo[turn].lastConnected?.let {
+                    it.toLong().calculateDate()?.let { date ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Canvas(modifier = Modifier.size(10.dp)) {
+                                drawCircle(Color.Gray)
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = date,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+            Row {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+                Text(
+                    text = viewModel.getCityName(turn, context),
+                    color = Color.White
+                )
             }
         }
     }

@@ -30,10 +30,14 @@ import kotlin.math.roundToInt
 
 object Extensions {
 
-    fun Modifier.animateSwipe(lasUserIndex: Int, onTurnChanged: (Int, Float)-> Unit) = composed {
+    fun Modifier.animateSwipe(
+        lastUserIndex: Int,
+        turnStart: Int,
+        onTurnChanged: (Int, Float) -> Unit,
+    ) = composed {
 
-        var turn by remember { mutableStateOf(0) }
-        val isLastUser by remember { derivedStateOf { lasUserIndex == turn + 1 } }
+        var turn by remember { mutableStateOf(turnStart) }
+        val isLastUser by remember { derivedStateOf { lastUserIndex == turn + 1 } }
 
         val offsetX = remember { Animatable(0f) }
         val offsetY = remember { Animatable(0f) }
@@ -50,11 +54,12 @@ object Extensions {
         LaunchedEffect(isDragging) {
             scale = if (isDragging) .9f else 1f
         }
-        LaunchedEffect(key1 = turn, key2 = offsetX.value){
+        LaunchedEffect(key1 = turn, key2 = offsetX.value) {
             onTurnChanged(turn, offsetX.value)
         }
 
-        this.scale(scaleAnimate)
+        this
+            .scale(scaleAnimate)
             .offset {
                 IntOffset(
                     x = (offsetX.value).roundToInt(),
@@ -66,8 +71,14 @@ object Extensions {
                     onDragStart = { isDragging = true },
                     onDragEnd = {
                         scope.launch {
-                            if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
-                            if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
+                            if (offsetX.value > 400) {
+                                offsetX.animateTo(1000f, tween(400)).endReason
+                                if (isLastUser) turn = 0 else turn++
+                            }
+                            if (offsetX.value < -400) {
+                                offsetX.animateTo(-1000f, tween(400)).endReason
+                                if (isLastUser) turn = 0 else turn++
+                            }
                             offsetX.snapTo(0f)
                             offsetY.snapTo(0f)
                         }
@@ -75,8 +86,14 @@ object Extensions {
                     },
                     onDragCancel = {
                         scope.launch {
-                            if (offsetX.value > 400) if (isLastUser) turn = 0 else turn++
-                            if (offsetX.value < -400) if (isLastUser) turn = 0 else turn++
+                            if (offsetX.value > 400) {
+                                if (isLastUser) turn = 0 else turn++
+                                offsetX.animateTo(1000f, tween(400)).endReason
+                            }
+                            if (offsetX.value < -400) {
+                                if (isLastUser) turn = 0 else turn++
+                                offsetX.animateTo(-1000f, tween(400)).endReason
+                            }
                             offsetX.snapTo(0f)
                             offsetY.snapTo(0f)
                         }
@@ -106,11 +123,11 @@ object Extensions {
             }
     }
 
-    fun Long.calculateDate(): String?{
+    fun Long.calculateDate(): String? {
         val now = System.currentTimeMillis()
         val difference = now - this
 
-        if (difference / (1000 * 3600 * 24) > 7)return null
+        if (difference / (1000 * 3600 * 24) > 7) return null
         if (difference / (1000 * 3600 * 24) > 1) return "active recently"
         if (difference / (1000 * 3600) > 1) return "active ${difference / (1000 * 3600)} hour ago"
         return "active less than hour ago"
