@@ -6,8 +6,7 @@ class CountryISO {
         val all: Map<String, String>
             get() = country2phone
 
-        private val country2phone: MutableMap<String, String> =
-            HashMap()
+        private val country2phone: MutableMap<String, String> = HashMap()
 
         init {
             country2phone["AF"] = "+93"

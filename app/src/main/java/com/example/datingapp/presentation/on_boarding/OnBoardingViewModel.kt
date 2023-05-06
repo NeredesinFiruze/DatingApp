@@ -1,15 +1,19 @@
 package com.example.datingapp.presentation.on_boarding
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.location.Location
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.datingapp.data.local.UserInfo
+import com.example.datingapp.navigation.Screen
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ktx.database
@@ -43,6 +47,22 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                         locationInfo = listOf(latitude, longitude)
                     )
             }
+    }
+
+    fun openLocationDialog(context: Context) {
+        val builder = AlertDialog.Builder(context)
+        builder.setMessage("Location is not enabled. please open for better matches")
+            .setCancelable(false)
+            .setPositiveButton("Settings") { _, _ ->
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                context.startActivity(intent)
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+
     }
 
     fun saveName(name: String) {
@@ -194,7 +214,7 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                                 .child("userInfo")
                                 .setValue(UserInfo::class.java.cast(_userInfo.value))
                                 .addOnCompleteListener { task ->
-                                    if (task.isSuccessful) navController.navigate("home")
+                                    if (task.isSuccessful) navController.navigate(Screen.Home.route)
                                     else println("failed")
                                 }
                         }

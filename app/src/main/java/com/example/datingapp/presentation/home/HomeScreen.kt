@@ -56,11 +56,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.datingapp.R
+import com.example.datingapp.navigation.Screen
 import com.example.datingapp.ui.theme.MaskBrush
 import com.example.datingapp.util.Extensions.animateSwipe
 import com.example.datingapp.util.Extensions.calculateAge
 import com.example.datingapp.util.Extensions.calculateDate
 import com.example.datingapp.util.Extensions.fixName
+import com.example.datingapp.util.GeocoderUtil
 import kotlinx.coroutines.launch
 
 @Composable
@@ -95,7 +97,7 @@ fun TopSection(navController: NavController) {
                 .size(42.dp)
                 .padding(8.dp)
                 .clickable {
-                    navController.navigate("filter")
+                    navController.navigate(Screen.Filter.route)
                 }
         )
     }
@@ -325,8 +327,13 @@ fun UserItem(
                     contentDescription = null,
                     tint = Color.White
                 )
+                val location = GeocoderUtil.geocoding(
+                    context,
+                    state[turn].locationInfo.first(),
+                    state[turn].locationInfo.last()
+                )
                 Text(
-                    text = viewModel.getCityName(turn, context),
+                    text = location,
                     color = Color.White
                 )
             }

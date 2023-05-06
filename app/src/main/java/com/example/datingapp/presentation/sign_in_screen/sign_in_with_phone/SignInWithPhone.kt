@@ -8,9 +8,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,6 +48,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -53,15 +56,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.datingapp.composables.BackButton
 import com.example.datingapp.composables.CustomButton
 import com.example.datingapp.navigation.Screen
+import com.example.datingapp.ui.theme.GrayNormal
 import com.example.datingapp.ui.theme.PinkColor
 import com.example.datingapp.ui.theme.TextColor
 import com.google.firebase.auth.PhoneAuthProvider
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
+
+val smsCode = MutableStateFlow("")
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -86,7 +94,8 @@ fun SignInWithPhone(
         }
         HorizontalPager(
             pageCount = 2,
-            state = pagerState
+            state = pagerState,
+            userScrollEnabled = false
         ) { page ->
             when (page) {
                 1 -> {
@@ -107,7 +116,7 @@ fun SignInWithPhone(
                         phoneViewModel = phoneViewModel,
                         context = context,
                         onSuccess = {
-                            navController.navigate(Screen.SignIn.route)
+                            navController.navigate(Screen.OnBoarding.route)
                         }
                     )
                 }
@@ -121,14 +130,33 @@ fun SignInWithPhone(
 fun SecondPhonePage(
     phoneViewModel: PhoneViewModel,
     context: Context,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
 ) {
     val focusRequesters = remember { List(6) { FocusRequester() } }
     val textFieldValues = remember { mutableStateListOf("", "", "", "", "", "") }
+    val scope = rememberCoroutineScope()
+
+    val code by smsCode.collectAsStateWithLifecycle()
+
+    LaunchedEffect(key1 = code) {
+        if (code.length != 6) return@LaunchedEffect
+        scope.launch {
+            code.forEachIndexed { index: Int, c: Char ->
+                textFieldValues[index] = c.toString()
+            }.also {
+                smsCode.emit("")
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
 
-        Row(Modifier.padding(16.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
             val localWidth = LocalConfiguration.current.screenWidthDp.dp
 
             for (i in 0..5) {
@@ -147,7 +175,7 @@ fun SecondPhonePage(
                         }
                     },
                     modifier = Modifier
-                        .width(localWidth / 8)
+                        .width(localWidth / 7)
                         .focusRequester(focusRequester)
                         .padding(horizontal = 4.dp)
                         .onKeyEvent {
@@ -166,6 +194,11 @@ fun SecondPhonePage(
                         unfocusedIndicatorColor = Color.LightGray
                     ),
                     singleLine = true,
+                    textStyle = TextStyle(
+                        color = GrayNormal,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 28.sp,
+                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
@@ -246,6 +279,7 @@ fun FirstPhonePage(
                     .constrainAs(tCode) {
                         top.linkTo(title.bottom, margin = 16.dp)
                         start.linkTo(title.start)
+                        end.linkTo(parent.end, 16.dp)
                     },
                 verticalAlignment = Alignment.CenterVertically
             ) {

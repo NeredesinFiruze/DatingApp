@@ -4,6 +4,8 @@ package com.example.datingapp.presentation.on_boarding
 
 import android.Manifest
 import android.content.Context
+import android.location.LocationManager
+import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -53,6 +55,7 @@ import com.example.datingapp.composables.DateTextField
 import com.example.datingapp.composables.EmojiText
 import com.example.datingapp.composables.NameTextField
 import com.example.datingapp.composables.rememberImeState
+import com.example.datingapp.navigation.Screen
 import com.example.datingapp.ui.theme.GrayLight
 import com.example.datingapp.ui.theme.GrayNormal
 import com.example.datingapp.ui.theme.PinkColor
@@ -64,7 +67,11 @@ import java.util.concurrent.Executors
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun OnBoarding(navController: NavController, context: Context) {
+fun OnBoarding(
+    navController: NavController,
+    context: Context,
+    locationManager: LocationManager
+) {
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
     val pageCount = 6
@@ -87,7 +94,7 @@ fun OnBoarding(navController: NavController, context: Context) {
     ) { page ->
         when (page) {
             0 -> {
-                FirstPage(navController, context = context) {
+                FirstPage(navController, context = context, locationManager) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = page + 1,
@@ -159,13 +166,15 @@ fun OnBoarding(navController: NavController, context: Context) {
 @Composable
 fun FirstPage(
     navController: NavController,
-    viewModel: OnBoardingViewModel = hiltViewModel(),
     context: Context,
+    locationManager: LocationManager,
+    viewModel: OnBoardingViewModel = hiltViewModel(),
     pageClick: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val imeState = rememberImeState()
     val focusState = LocalFocusManager.current
+
 
     val permissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -183,12 +192,19 @@ fun FirstPage(
     SideEffect {
         permissionsState.launchMultiplePermissionRequest()
     }
-    if(permissionsState.allPermissionsGranted){
-        viewModel.setLocation(context)
+
+    //this launch will be run, every location settings change
+    LaunchedEffect(key1 = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        if(permissionsState.allPermissionsGranted){
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                //if gps enabled
+                viewModel.setLocation(context)
+            }else{
+                //if not enabled, then open dialog
+                viewModel.openLocationDialog(context)
+            }
+        }
     }
-
-
-
 
     Box(
         modifier = Modifier
@@ -198,7 +214,7 @@ fun FirstPage(
         Column {
             BackButton(page = 1) {
                 if (imeState.value) focusState.clearFocus()
-                else navController.navigate("sign-in")
+                else navController.navigate(Screen.SignIn.route)
             }
             Spacer(modifier = Modifier.height(80.dp))
             Text(
@@ -627,8 +643,8 @@ fun SixthPage(
 }
 
 fun getOutputDirectory(context: Context): File {
-    val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
+    val mediaDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.let {
         File(it, context.resources.getString(R.string.app_name)).apply { mkdirs() }
     }
-    return if (mediaDir != null && mediaDir.exists()) mediaDir else context.filesDir
+    return mediaDir ?: context.filesDir
 }

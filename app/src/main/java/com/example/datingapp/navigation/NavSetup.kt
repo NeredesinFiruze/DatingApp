@@ -1,6 +1,7 @@
 package com.example.datingapp.navigation
 
 import android.content.Context
+import android.location.LocationManager
 import android.telephony.TelephonyManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -37,7 +38,8 @@ fun NavSetup(
     navController: NavHostController,
     context: Context,
     googleAuthUiClient: GoogleAuthUiClient,
-    telephonyManager: TelephonyManager
+    telephonyManager: TelephonyManager,
+    locationManager: LocationManager,
 ) {
     val chatViewModel = hiltViewModel<ChatViewModel>()
     val scope = rememberCoroutineScope()
@@ -90,10 +92,10 @@ fun NavSetup(
             )
         }
         composable(Screen.SignInPhone.route) {
-            SignInWithPhone(navController,telephonyManager,context)
+            SignInWithPhone(navController, telephonyManager, context)
         }
         composable(Screen.OnBoarding.route) {
-            OnBoarding(navController, context)
+            OnBoarding(navController, context, locationManager)
         }
         composable(Screen.Home.route) {
             HomeScreen(navController, context)
@@ -116,7 +118,7 @@ fun NavSetup(
                     scope.launch {
                         googleAuthUiClient.signOut()
                     }
-                    navController.navigate("sign-in")
+                    navController.navigate(Screen.SignIn.route)
                 }
             )
         }

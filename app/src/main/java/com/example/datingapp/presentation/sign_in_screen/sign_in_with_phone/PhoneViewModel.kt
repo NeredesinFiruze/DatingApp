@@ -72,8 +72,3 @@ class PhoneViewModel @Inject constructor() : ViewModel() {
             }
     }
 }
-
-data class PhoneData(
-    val countryCodeIndex: Int = 0,
-    val verificationId: String = "",
-)

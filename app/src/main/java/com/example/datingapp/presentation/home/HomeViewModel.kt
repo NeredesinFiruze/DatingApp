@@ -1,7 +1,5 @@
 package com.example.datingapp.presentation.home
 
-import android.content.Context
-import android.location.Geocoder
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -18,7 +16,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -41,20 +38,26 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getCityName(turn: Int,context: Context):String{
-        val geoCoder = Geocoder(context, Locale.getDefault())
-        val address = geoCoder.getFromLocation(
-            userListState.value[turn].locationInfo.first(),
-            userListState.value[turn].locationInfo.last(),
-            1
-        )
-        return try {
-            address?.get(0)?.locality ?: "NOT_FOUND_LOCATION"
-        }
-        catch (e: Exception){
-            "NOT_FOUND_LOCATION"
-        }
-    }
+//    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//    fun getCityName(turn: Int, context: Context):String{
+//
+//        var city: String? = null
+//        val geoCoder = Geocoder(context, Locale.getDefault())
+//        val address = geoCoder.getFromLocation(
+//            userListState.value[turn].locationInfo.first(),
+//            userListState.value[turn].locationInfo.last(),
+//            1
+//        ) { address ->
+//            city = if (address[0].locality == null) address[0].subLocality else address[0].locality
+//        }
+//        return try {
+//            city ?:
+//            address.
+//        }
+//        catch (e: Exception){
+//            "NOT_FOUND_LOCATION"
+//        }
+//    }
 
     fun getUser() {
         val getData = object : ValueEventListener {

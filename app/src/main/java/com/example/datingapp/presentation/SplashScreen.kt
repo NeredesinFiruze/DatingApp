@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.datingapp.navigation.Screen
 import com.example.datingapp.presentation.home.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
@@ -39,9 +40,9 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         value = 32
         delay(1.seconds)
-        val destination = if (userId == null) "sign-in"
-        else if (signIn == true) "home"
-        else "on-boarding"
+        val destination = if (userId == null) Screen.SignIn.route
+        else if (signIn == true) Screen.Home.route
+        else Screen.OnBoarding.route
 
         navController.navigate(destination)
     }
