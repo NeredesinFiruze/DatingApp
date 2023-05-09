@@ -24,7 +24,7 @@ fun NameTextField(
     TextField(
         value = query,
         onValueChange = { newValue ->
-            if (newValue.length < 40){
+            if (newValue.length < 40 && newValue.all { it.isLetter() }){
                 query = newValue
                 if (newValue.length > 2) viewModel.saveName(newValue)
                 else viewModel.saveName("")

@@ -61,20 +61,20 @@ fun DateTextField(
 
     OutlinedTextField(
         value = value,
-        onValueChange = {
+        onValueChange = { textFieldValue ->
             // ex: "01-1M-yyyy" -> "011
-            val date = it.text.takeDigitString()
+            val date = textFieldValue.text.takeDigitString()
 
             if (date.length < 9) {
                 val selection = if (!isBackspacePressed) {
                     when (date.length) {
-                        3, 5 -> it.selection.start + 1
-                        else -> it.selection.start
+                        3, 5 -> textFieldValue.selection.start + 1
+                        else -> textFieldValue.selection.start
                     }
-                } else it.selection.start
+                } else textFieldValue.selection.start
                 onValueChange(
-                    it.copy(
-                        text = TextFieldDateFormatter.format(it),
+                    textFieldValue.copy(
+                        text = TextFieldDateFormatter.format(textFieldValue),
                         selection = TextRange(selection)
                     )
                 )
