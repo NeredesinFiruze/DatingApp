@@ -2,7 +2,6 @@ package com.example.datingapp.composables
 
 import android.content.Context
 import android.net.Uri
-import android.view.MotionEvent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -10,6 +9,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,12 +22,14 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.sharp.AddAPhoto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -42,7 +44,6 @@ import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CameraView(
     outputDirectory: File,
@@ -51,18 +52,17 @@ fun CameraView(
     onImageCaptured: (Uri) -> Unit,
     onError: (ImageCaptureException) -> Unit,
 ) {
-    // 1
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val preview = Preview.Builder().build()
     val previewView = remember { PreviewView(context) }
     val imageCapture: ImageCapture = remember { ImageCapture.Builder().build() }
-    val isFrontCamera = viewModel.isFrontCamera.value
-    val cameraSelector = if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA
-                         else CameraSelector.DEFAULT_BACK_CAMERA
 
-    // 2
+    val isFrontCamera = viewModel.isFrontCamera.value
+    val cameraSelector = if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
+    var drag by remember { mutableStateOf(0f) }
+
     LaunchedEffect(isFrontCamera) {
         val cameraProvider = context.getCameraProvider()
         cameraProvider.unbindAll()
@@ -76,16 +76,24 @@ fun CameraView(
         preview.setSurfaceProvider(previewView.surfaceProvider)
     }
 
-    // 3
-    Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
         AndroidView(
             factory = { previewView },
             modifier = Modifier
                 .fillMaxSize()
-                .motionEventSpy {
-                    if (it.action == MotionEvent.ACTION_UP){
-                        viewModel.rotateCamera()
-                    }
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onDragEnd = {
+                            if (drag < 0) viewModel.rotateCamera()
+                        },
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            drag = dragAmount
+                        }
+                    )
                 }
         )
 
