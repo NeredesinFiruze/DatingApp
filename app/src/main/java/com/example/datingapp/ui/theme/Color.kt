@@ -13,6 +13,7 @@ val ContentWhite = Color(0xFFF1F2F4)
 val TextColor = Color(0xFF21252E)
 val PinkColor = Color(0xFFFC2E79)
 val OrangeColor = Color(0xFFFF7654)
+val GreenColor = Color(0xFF6CDB71)
 val ChatColor1 = Color(0xFF90CAF9)
 val ChatColor2 = Color(0xFFE0F2F1)
 
