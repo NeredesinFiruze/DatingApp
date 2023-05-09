@@ -1,11 +1,11 @@
-package com.example.datingapp.presentation.sign_in_screen.sign_in_with_google
+package com.example.datingapp.presentation.sign_in.sign_in_with_google
 
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import com.example.datingapp.R
-import com.example.datingapp.presentation.sign_in_screen.SignInResult
-import com.example.datingapp.presentation.sign_in_screen.UserData
+import com.example.datingapp.presentation.sign_in.SignInResult
+import com.example.datingapp.presentation.sign_in.UserData
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.SignInClient

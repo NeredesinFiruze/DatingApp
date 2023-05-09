@@ -1,4 +1,4 @@
-package com.example.datingapp.presentation.sign_in_screen.sign_in_with_phone
+package com.example.datingapp.presentation.sign_in.sign_in_with_phone
 
 data class PhoneData(
     val countryCodeIndex: Int = 0,

@@ -1,4 +1,4 @@
-package com.example.datingapp.presentation.sign_in_screen
+package com.example.datingapp.presentation.sign_in
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.datingapp.R
 import com.example.datingapp.navigation.Screen
-import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.SignInState
+import com.example.datingapp.presentation.sign_in.sign_in_with_google.SignInState
 import com.example.datingapp.ui.theme.Brush2
 import com.example.datingapp.ui.theme.ContentWhite
 

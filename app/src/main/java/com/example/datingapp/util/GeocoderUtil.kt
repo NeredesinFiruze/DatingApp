@@ -3,6 +3,7 @@ package com.example.datingapp.util
 import android.content.Context
 import android.location.Geocoder
 import android.os.Build
+import com.example.datingapp.util.Constants.NOT_FOUND_LOCATION
 import java.util.Locale
 
 object GeocoderUtil {
@@ -31,6 +32,6 @@ object GeocoderUtil {
                 e.printStackTrace()
             }
         }
-        return city ?: "NOT_FOUND_LOCATION"
+        return city ?: NOT_FOUND_LOCATION
     }
 }

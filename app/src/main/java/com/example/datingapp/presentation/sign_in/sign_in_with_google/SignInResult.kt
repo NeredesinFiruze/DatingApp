@@ -1,4 +1,4 @@
-package com.example.datingapp.presentation.sign_in_screen
+package com.example.datingapp.presentation.sign_in
 
 data class SignInResult(
     val data: UserData?,
