@@ -3,7 +3,6 @@ package com.example.datingapp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Bundle
 import android.telephony.TelephonyManager
@@ -20,10 +19,9 @@ import com.example.datingapp.data.local.ConnectionInfo
 import com.example.datingapp.data.local.listOfBottomNavItem
 import com.example.datingapp.navigation.NavSetup
 import com.example.datingapp.navigation.Screen
-import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.GoogleAuthUiClient
-import com.example.datingapp.presentation.sign_in_screen.sign_in_with_phone.smsCode
+import com.example.datingapp.presentation.sign_in.sign_in_with_google.GoogleAuthUiClient
+import com.example.datingapp.presentation.sign_in.sign_in_with_phone.smsCode
 import com.example.datingapp.ui.theme.DateFlirtAppTheme
-import com.example.datingapp.util.SmsBroadcastReceiver
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.phone.SmsRetriever
 import com.google.firebase.auth.FirebaseAuth
@@ -36,30 +34,21 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val googleAuthUiClient by lazy {
-        GoogleAuthUiClient(
-            applicationContext,
-            Identity.getSignInClient(applicationContext)
-        )
-    }
+    private val googleAuthUiClient by lazy { GoogleAuthUiClient(applicationContext, Identity.getSignInClient(applicationContext))}
     private val telephonyManager by lazy { getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager }
     private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
-    private val smsReceiver = SmsBroadcastReceiver()
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         observeConnectionStatus()
 
-        val intentFilter = IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION)
-        registerReceiver(smsReceiver,intentFilter,SmsRetriever.SEND_PERMISSION,null)
-        SmsRetriever.getClient(this).startSmsUserConsent(null)
-
         setContent {
             DateFlirtAppTheme {
                 val navController = rememberNavController()
                 val backStackEntry = navController.currentBackStackEntryAsState()
                 val destination = backStackEntry.value?.destination?.route
+
                 Scaffold(
                     bottomBar = {
                         if (destination == null ||
@@ -90,10 +79,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-    override fun onStop() {
-        super.onStop()
-        unregisterReceiver(smsReceiver)
     }
 
     @Suppress("DEPRECATION")
