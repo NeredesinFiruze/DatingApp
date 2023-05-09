@@ -122,7 +122,7 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
     }
 
     private val mutableIndex = mutableStateOf(-1)
-    fun addImage(uri: Uri? = null, index: Int? = null) {
+    fun addImageFromCamera(uri: Uri? = null, index: Int? = null) {
         val list = _userInfo.value.picture.toMutableList()
 
         if (index != null) {
@@ -135,6 +135,21 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                 )
             }
         }
+    }
+
+    fun addImageFromGallery(uris: List<Uri>){
+        val list: MutableList<String?> = _userInfo.value.picture.filterNotNull().toMutableList()
+        uris.forEach {
+            if (list.size < 6) list.add(it.toString())
+        }
+
+        while (list.size < 6){
+            list.add(null)
+        }
+
+        _userInfo.value = userInfo.value.copy(
+            picture = list.toList()
+        )
     }
 
     fun removeImage(index: Int) {

@@ -44,7 +44,7 @@ fun NavSetup(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.OnBoarding.route
+        startDestination = Screen.Splash.route
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(navController)

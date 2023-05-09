@@ -7,6 +7,7 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -20,9 +21,9 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AddAPhoto
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.BottomCenter
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,19 +48,9 @@ import com.example.datingapp.R
 import com.example.datingapp.composables.*
 import com.example.datingapp.data.local.Gender
 import com.example.datingapp.data.local.listOfRelationType
-import com.example.datingapp.ui.theme.*
-import com.example.datingapp.composables.CameraView
-import com.example.datingapp.composables.BackButton
-import com.example.datingapp.composables.Block
-import com.example.datingapp.composables.CustomButton
-import com.example.datingapp.composables.DateTextField
-import com.example.datingapp.composables.EmojiText
-import com.example.datingapp.composables.NameTextField
-import com.example.datingapp.composables.rememberImeState
 import com.example.datingapp.navigation.Screen
-import com.example.datingapp.ui.theme.GrayLight
-import com.example.datingapp.ui.theme.GrayNormal
-import com.example.datingapp.ui.theme.PinkColor
+import com.example.datingapp.presentation.sign_in.sign_in_with_google.GoogleAuthUiClient
+import com.example.datingapp.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.launch
@@ -70,7 +62,8 @@ import java.util.concurrent.Executors
 fun OnBoarding(
     navController: NavController,
     context: Context,
-    locationManager: LocationManager
+    locationManager: LocationManager,
+    googleAuthUiClient: GoogleAuthUiClient
 ) {
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
@@ -94,7 +87,7 @@ fun OnBoarding(
     ) { page ->
         when (page) {
             0 -> {
-                FirstPage(navController, context = context, locationManager) {
+                FirstPage(navController, context = context, locationManager, googleAuthUiClient) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = page + 1,
@@ -168,13 +161,14 @@ fun FirstPage(
     navController: NavController,
     context: Context,
     locationManager: LocationManager,
+    googleAuthUiClient: GoogleAuthUiClient,
     viewModel: OnBoardingViewModel = hiltViewModel(),
     pageClick: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val imeState = rememberImeState()
     val focusState = LocalFocusManager.current
-
+    val scope = rememberCoroutineScope()
 
     val permissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -194,12 +188,12 @@ fun FirstPage(
     }
 
     //this launch will be run, every location settings change
-    LaunchedEffect(key1 = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-        if(permissionsState.allPermissionsGranted){
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+    LaunchedEffect(key1 = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        if (permissionsState.allPermissionsGranted) {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 //if gps enabled
                 viewModel.setLocation(context)
-            }else{
+            } else {
                 //if not enabled, then open dialog
                 viewModel.openLocationDialog(context)
             }
@@ -214,7 +208,12 @@ fun FirstPage(
         Column {
             BackButton(page = 1) {
                 if (imeState.value) focusState.clearFocus()
-                else navController.navigate(Screen.SignIn.route)
+                else {
+                    navController.navigate(Screen.SignIn.route)
+                    scope.launch {
+                        googleAuthUiClient.signOut()
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(80.dp))
             Text(
@@ -290,7 +289,8 @@ fun SecondPage(
         }
 
         val condition = viewModel.userInfo.value.birthDate.lastOrNull() != 'Y' &&
-                viewModel.userInfo.value.birthDate.lastOrNull() != null
+                viewModel.userInfo.value.birthDate.lastOrNull() != null &&
+                viewModel.userInfo.value.birthDate.all { it.isDigit() || it == '/' }
 
         CustomButton(
             text = "NEXT",
@@ -329,15 +329,13 @@ fun ThirdPage(
             Spacer(modifier = Modifier.height(60.dp))
 
             Gender.values().forEachIndexed { index, gender ->
-                if (gender != Gender.NONE) {
-                    CustomButton(
-                        text = gender.name,
-                        enabled = index == viewModel.userInfo.value.gender,
-                        onClick = {
-                            viewModel.yourGender(index)
-                        }
-                    )
-                }
+                CustomButton(
+                    text = gender.name,
+                    enabled = index == viewModel.userInfo.value.gender,
+                    onClick = {
+                        viewModel.yourGender(index)
+                    }
+                )
             }
         }
         val condition = viewModel.userInfo.value.gender != -1
@@ -373,13 +371,11 @@ fun FourthPage(
             Spacer(modifier = Modifier.height(60.dp))
 
             Gender.values().forEachIndexed { index, gender ->
-                if (gender != Gender.NONE) {
-                    CustomButton(
-                        text = gender.name,
-                        enabled = viewModel.userInfo.value.interestedGender.contains(index)
-                    ) {
-                        viewModel.showMe(index)
-                    }
+                CustomButton(
+                    text = gender.name,
+                    enabled = viewModel.userInfo.value.interestedGender.contains(index)
+                ) {
+                    viewModel.showMe(index)
                 }
             }
         }
@@ -412,11 +408,9 @@ fun FifthPage(
                     if (index <= 2)
                         Block(
                             enable = viewModel.userInfo.value.relationType.contains(index),
-                            onClick = {
-                                viewModel.chooseRelationType(index)
-                            },
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(1f),
+                            onClick = { viewModel.chooseRelationType(index) }
                         ) {
                             Column(
                                 verticalArrangement = SpaceAround,
@@ -438,11 +432,9 @@ fun FifthPage(
                     if (index > 2)
                         Block(
                             enable = viewModel.userInfo.value.relationType.contains(index),
-                            onClick = {
-                                viewModel.chooseRelationType(index)
-                            },
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(1f),
+                            onClick = { viewModel.chooseRelationType(index) }
                         ) {
                             Column(
                                 verticalArrangement = SpaceAround,
@@ -470,6 +462,7 @@ fun FifthPage(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SixthPage(
     navController: NavController,
@@ -480,139 +473,66 @@ fun SixthPage(
 //    LaunchedEffect(Unit){
 //        viewModel.test()
 //    }
+    val localWidth = LocalConfiguration.current.screenWidthDp.dp
     val cameraExecutor = Executors.newSingleThreadExecutor()!!
-    val shouldShowCamera = remember { mutableStateOf(false) }
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                shouldShowCamera.value = true
-            }
-        }
-    )
+    var shouldShowCamera by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.setLocation(context)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Center
     ) {
-
-
-
-
-
-        Icons.Default.AddAPhoto
-        Icons.Default.AddPhotoAlternate
-
-
-
-
-
         BackButton(Modifier.align(TopStart)) { pageClick() }
-        Column(Modifier.padding(horizontal = 8.dp)) {
-            Row(Modifier.fillMaxWidth()) {
+
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+        ) {
+            FlowRow(Modifier.fillMaxWidth()) {
                 viewModel.userInfo.value.picture.forEachIndexed { index, uri ->
-                    if (index <= 2)
-                        Block(
-                            onClick = {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                viewModel.addImage(index = index)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                        ) {
-                            if (uri == null) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Center
-                                ) {
+
+                    var showMediaIcons by remember { mutableStateOf(false) }
+
+                    Block(
+                        modifier = Modifier
+                            .width(localWidth / 4)
+                            .weight(1f),
+                        aspectRatio = .8f,
+                        onClick = { showMediaIcons = !showMediaIcons }
+                    ) {
+                        if (uri == null) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Center
+                            ) {
+                                if (showMediaIcons){
+                                    MediaIcons(
+                                        viewModel = viewModel,
+                                        index = index,
+                                        showCamera = { shouldShowCamera = true }
+                                    )
+                                }else{
                                     Icon(
                                         imageVector = Icons.Rounded.Add,
                                         contentDescription = null,
-                                        tint = Color.Red
+                                        tint = PinkColor
                                     )
-                                }
-                            } else {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(model = uri),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                    IconButton(
-                                        onClick = {
-                                            viewModel.removeImage(index)
-                                        },
-                                        modifier = Modifier
-                                            .align(TopEnd)
-                                            .clip(CircleShape)
-                                            .size(34.dp)
-                                            .padding(4.dp)
-                                            .background(Color.Red)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Remove,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
                                 }
                             }
-                        }
-                }
-            }
-            Row(Modifier.fillMaxWidth()) {
-                viewModel.userInfo.value.picture.forEachIndexed { index, uri ->
-                    if (index > 2)
-                        Block(
-                            onClick = {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                viewModel.addImage(index = index)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                        ) {
-                            if (uri == null) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Add,
-                                        contentDescription = null,
-                                        tint = Color.Red
-                                    )
+                        } else {
+                            CustomImageBox(
+                                uri = uri,
+                                onClickRemove = {
+                                    viewModel.removeImage(index)
+                                    showMediaIcons = false
                                 }
-                            } else {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(model = uri),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                    IconButton(
-                                        onClick = {
-                                            viewModel.removeImage(index)
-                                        },
-                                        modifier = Modifier
-                                            .align(TopEnd)
-                                            .clip(CircleShape)
-                                            .size(34.dp)
-                                            .padding(4.dp)
-                                            .background(Color.Red)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Remove,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
+                            )
                         }
+                    }
                 }
             }
         }
@@ -625,19 +545,100 @@ fun SixthPage(
             modifier = Modifier.align(BottomCenter)
         )
 
-        if (shouldShowCamera.value) {
+        if (shouldShowCamera) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CameraView(
                     outputDirectory = getOutputDirectory(context),
                     executor = cameraExecutor,
                     onImageCaptured = {
-                        shouldShowCamera.value = false
-                        viewModel.addImage(uri = it)
+                        shouldShowCamera = false
+                        viewModel.addImageFromCamera(uri = it)
                         cameraExecutor.shutdown()
                     },
                     onError = {}
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun MediaIcons(
+    viewModel: OnBoardingViewModel,
+    index: Int,
+    showCamera: ()-> Unit
+) {
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                showCamera()
+            }
+        }
+    )
+
+    val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { listOfUri ->
+            viewModel.addImageFromGallery(listOfUri)
+        }
+    )
+
+    Row {
+        IconButton(
+            onClick = {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                viewModel.addImageFromCamera(index = index)
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddAPhoto,
+                contentDescription = null,
+                tint = GreenColor,
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+
+        IconButton(
+            onClick = {
+                multiplePhotoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddPhotoAlternate,
+                contentDescription = null,
+                tint = GreenColor,
+            )
+        }
+    }
+}
+
+@Composable
+fun CustomImageBox(uri: String,onClickRemove: ()-> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = rememberAsyncImagePainter(model = uri),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        IconButton(
+            onClick = onClickRemove,
+            modifier = Modifier
+                .align(TopEnd)
+                .clip(CircleShape)
+                .size(34.dp)
+                .padding(4.dp)
+                .background(Color.Red)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Remove,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
