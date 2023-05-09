@@ -19,7 +19,7 @@ data class UserInfo(
 )
 
 enum class Gender{
-    MALE, FEMALE, NONE
+    MALE, FEMALE
 }
 
 data class RelationType(
