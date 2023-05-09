@@ -58,6 +58,7 @@ import coil.compose.AsyncImage
 import com.example.datingapp.R
 import com.example.datingapp.navigation.Screen
 import com.example.datingapp.ui.theme.MaskBrush
+import com.example.datingapp.util.Constants.NOT_FOUND_LOCATION
 import com.example.datingapp.util.Extensions.animateSwipe
 import com.example.datingapp.util.Extensions.calculateAge
 import com.example.datingapp.util.Extensions.calculateDate
@@ -321,21 +322,27 @@ fun UserItem(
                     }
                 }
             }
-            Row {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Color.White
-                )
+            if (state[turn].locationInfo.isNotEmpty()){
+
                 val location = GeocoderUtil.geocoding(
                     context,
                     state[turn].locationInfo.first(),
                     state[turn].locationInfo.last()
                 )
-                Text(
-                    text = location,
-                    color = Color.White
-                )
+
+                if (location != NOT_FOUND_LOCATION){
+                    Row {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                        Text(
+                            text = location,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }
