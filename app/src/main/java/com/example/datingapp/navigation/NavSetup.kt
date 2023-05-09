@@ -3,7 +3,6 @@ package com.example.datingapp.navigation
 import android.content.Context
 import android.location.LocationManager
 import android.telephony.TelephonyManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -12,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -27,10 +25,10 @@ import com.example.datingapp.presentation.chat.ChatViewModel
 import com.example.datingapp.presentation.home.HomeScreen
 import com.example.datingapp.presentation.home.HomeViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoarding
-import com.example.datingapp.presentation.sign_in_screen.sign_in_with_google.GoogleAuthUiClient
-import com.example.datingapp.presentation.sign_in_screen.SignInScreen
-import com.example.datingapp.presentation.sign_in_screen.SignInViewModel
-import com.example.datingapp.presentation.sign_in_screen.sign_in_with_phone.SignInWithPhone
+import com.example.datingapp.presentation.sign_in.SignInScreen
+import com.example.datingapp.presentation.sign_in.SignInViewModel
+import com.example.datingapp.presentation.sign_in.sign_in_with_google.GoogleAuthUiClient
+import com.example.datingapp.presentation.sign_in.sign_in_with_phone.SignInWithPhone
 import kotlinx.coroutines.launch
 
 @Composable
@@ -43,11 +41,10 @@ fun NavSetup(
 ) {
     val chatViewModel = hiltViewModel<ChatViewModel>()
     val scope = rememberCoroutineScope()
-    val localContext = LocalContext.current
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.OnBoarding.route
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(navController)
@@ -68,11 +65,10 @@ fun NavSetup(
                     }
                 }
             )
-            LaunchedEffect(key1 = state.isSuccessful) {
+            LaunchedEffect(state) {
                 if (state.isSuccessful) {
-                    Toast.makeText(localContext, "sign in successful", Toast.LENGTH_LONG)
-                        .show()
-                    navController.navigate(Screen.OnBoarding.route)
+                    val destination = viewModel.destination()
+                    navController.navigate(destination)
                     viewModel.resetState()
                 }
             }
@@ -95,7 +91,7 @@ fun NavSetup(
             SignInWithPhone(navController, telephonyManager, context)
         }
         composable(Screen.OnBoarding.route) {
-            OnBoarding(navController, context, locationManager)
+            OnBoarding(navController, context, locationManager, googleAuthUiClient)
         }
         composable(Screen.Home.route) {
             HomeScreen(navController, context)
@@ -107,7 +103,7 @@ fun NavSetup(
             ChatListScreen(navController, chatViewModel = chatViewModel)
         }
         composable(Screen.Filter.route) {
-            FilterScreen()
+            FilterScreen(navController)
         }
         composable(Screen.Settings.route) {
             val homeViewModel = hiltViewModel<HomeViewModel>()
