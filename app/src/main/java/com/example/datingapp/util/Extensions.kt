@@ -138,17 +138,17 @@ object Extensions {
 
         val seconds = ((now - this) / 1000).toInt()
         if (seconds < 60) {
-            return "biraz önce"
+            return "recently"
         }
 
         val minutes = seconds / 60
         if (minutes < 60) {
-            return "$minutes dakika önce"
+            return "$minutes minutes ago"
         }
 
         val hours = minutes / 60
         if (hours < 24) {
-            return "$hours saat önce"
+            return "$hours hour ago"
         }
 
         val dateFormatter = if (now - this < 7 * 24 * 60 * 60 * 1000) {
@@ -159,8 +159,8 @@ object Extensions {
         dateFormatter.timeZone = TimeZone.getDefault()
         val date = dateFormatter.format(Date(this))
         return when {
-            hours < 48 -> "dün"
-            hours < 24 * 7 -> "$hours gün önce"
+            hours < 48 -> "yesterday"
+            hours < 24 * 7 -> "$hours day ago"
             else -> date
         }
     }

@@ -125,40 +125,44 @@ fun SearchSection(
     if (state.isNotEmpty()) {
         Box(modifier = Modifier.fillMaxSize()) {
 
-            if (state.size > 4)
-            UserItem(context, 4, Modifier.zIndex(zIndex5)) {
-                zIndex1 = 5f
-                zIndex2 = 4f
-                zIndex3 = 3f
-                zIndex4 = 2f
-                zIndex5 = 1f
+            if (state.size > 4){
+                UserItem(context, 4, Modifier.zIndex(zIndex5)) {
+                    zIndex1 = 5f
+                    zIndex2 = 4f
+                    zIndex3 = 3f
+                    zIndex4 = 2f
+                    zIndex5 = 1f
+                }
             }
 
-            if (state.size > 3)
-            UserItem(context, 3, Modifier.zIndex(zIndex4)) {
-                zIndex1 = 1f
-                zIndex2 = 2f
-                zIndex3 = 3f
-                zIndex4 = 4f
-                zIndex5 = 5f
+            if (state.size > 3){
+                UserItem(context, 3, Modifier.zIndex(zIndex4)) {
+                    zIndex1 = 1f
+                    zIndex2 = 2f
+                    zIndex3 = 3f
+                    zIndex4 = 4f
+                    zIndex5 = 5f
+                }
             }
 
-            if (state.size > 2)
-            UserItem(context, 2, Modifier.zIndex(zIndex3)) {
-                zIndex1 = 3f
-                zIndex2 = 2f
-                zIndex3 = 1f
-                zIndex4 = 5f
-                zIndex5 = 4f
+            if (state.size > 2){
+                UserItem(context, 2, Modifier.zIndex(zIndex3)) {
+                    zIndex1 = 3f
+                    zIndex2 = 2f
+                    zIndex3 = 1f
+                    zIndex4 = 5f
+                    zIndex5 = 4f
+                }
             }
 
-            if (state.size > 1)
-            UserItem(context, 1, Modifier.zIndex(zIndex2)) {
-                zIndex1 = 2f
-                zIndex2 = 1f
-                zIndex3 = 5f
-                zIndex4 = 4f
-                zIndex5 = 3f
+            if (state.size > 1){
+                UserItem(context, 1, Modifier.zIndex(zIndex2)) {
+                    zIndex1 = 2f
+                    zIndex2 = 1f
+                    zIndex3 = 5f
+                    zIndex4 = 4f
+                    zIndex5 = 3f
+                }
             }
 
             UserItem(context, 0, Modifier.zIndex(zIndex1)) {
@@ -331,7 +335,7 @@ fun UserItem(
                 )
 
                 if (location != NOT_FOUND_LOCATION){
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
