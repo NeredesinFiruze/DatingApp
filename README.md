@@ -1,6 +1,11 @@
 # Dating-App
 
-
+# Previews
+<p align="center">
+<img src="https://github.com/NeredesinFiruze/DatingApp/blob/master/screenshots/screenshot-1.png" width="30%" />
+<img src="https://github.com/NeredesinFiruze/DatingApp/blob/master/screenshots/screenshot-2.png" width="30%" />
+<img src="https://github.com/NeredesinFiruze/DatingApp/blob/master/screenshots/screenshot-3.png" width="30%" />
+</p>
 
 ## Tech Stack
 * [Kotlin](https://kotlinlang.org/)
