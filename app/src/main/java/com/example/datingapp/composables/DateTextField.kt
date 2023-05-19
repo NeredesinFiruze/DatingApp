@@ -19,27 +19,21 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign.Companion.Center
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoardingViewModel
 import com.example.datingapp.ui.theme.GrayNormal
 import java.util.*
 
 
 @Composable
-fun DateTextField(viewModel: OnBoardingViewModel = hiltViewModel()) {
+fun DateTextField(viewModel: OnBoardingViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var date by remember {
-            mutableStateOf(
-                TextFieldValue(
-                    text = "DD/MM/YYYY"
-                )
-            )
-        }
+        var date by remember { viewModel.birthdate }
+
         DateTextField(
             value = date,
             onValueChange = {

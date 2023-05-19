@@ -63,7 +63,8 @@ fun OnBoarding(
     navController: NavController,
     context: Context,
     locationManager: LocationManager,
-    googleAuthUiClient: GoogleAuthUiClient
+    googleAuthUiClient: GoogleAuthUiClient,
+    viewModel: OnBoardingViewModel = hiltViewModel(),
 ) {
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
@@ -87,18 +88,33 @@ fun OnBoarding(
     ) { page ->
         when (page) {
             0 -> {
-                FirstPage(navController, context = context, locationManager, googleAuthUiClient) {
-                    scope.launch {
-                        pagerState.animateScrollToPage(
-                            page = page + 1,
-                            animationSpec = tween(500)
-                        )
+                FirstPage(
+                    navController =navController,
+                    context =context,
+                    locationManager = locationManager,
+                    googleAuthUiClient =googleAuthUiClient,
+                    viewModel = viewModel,
+                    pageClick = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(
+                                page = page + 1,
+                                animationSpec = tween(500)
+                            )
+                        }
+                    },
+                    toPage = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(
+                                page = it,
+                                animationSpec = tween(250 * it)
+                            )
+                        }
                     }
-                }
+                )
             }
 
             1 -> {
-                SecondPage {
+                SecondPage(viewModel) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = if (it) page + 1 else page - 1,
@@ -109,7 +125,7 @@ fun OnBoarding(
             }
 
             2 -> {
-                ThirdPage {
+                ThirdPage(viewModel) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = if (it) page + 1 else page - 1,
@@ -120,7 +136,7 @@ fun OnBoarding(
             }
 
             3 -> {
-                FourthPage {
+                FourthPage(viewModel) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = if (it) page + 1 else page - 1,
@@ -131,7 +147,7 @@ fun OnBoarding(
             }
 
             4 -> {
-                FifthPage {
+                FifthPage(viewModel) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = if (it) page + 1 else page - 1,
@@ -142,7 +158,7 @@ fun OnBoarding(
             }
 
             5 -> {
-                SixthPage(navController, context = context) {
+                SixthPage(navController, context, viewModel) {
                     scope.launch {
                         pagerState.animateScrollToPage(
                             page = page - 1,
@@ -162,8 +178,9 @@ fun FirstPage(
     context: Context,
     locationManager: LocationManager,
     googleAuthUiClient: GoogleAuthUiClient,
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     pageClick: () -> Unit,
+    toPage: (Int)-> Unit
 ) {
     val scrollState = rememberScrollState()
     val imeState = rememberImeState()
@@ -177,14 +194,14 @@ fun FirstPage(
         )
     )
 
+    SideEffect {
+        permissionsState.launchMultiplePermissionRequest()
+    }
+
     LaunchedEffect(key1 = imeState.value) {
         if (imeState.value) {
             scrollState.scrollTo(Int.MAX_VALUE)
         }
-    }
-
-    SideEffect {
-        permissionsState.launchMultiplePermissionRequest()
     }
 
     //this launch will be run, every location settings change
@@ -223,7 +240,7 @@ fun FirstPage(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
-            NameTextField { pageClick() }
+            NameTextField(viewModel) { pageClick() }
             Text(
                 text = "Uygulama'da bu adla görünecek ve bunu değiştiremeyeceksin",
                 color = Color.LightGray
@@ -238,16 +255,30 @@ fun FirstPage(
             onClick = {
                 if (condition) {
                     focusState.clearFocus()
+                    viewModel.saveToLocalDatabase()
                     pageClick()
                 }
             }
         )
+        if (viewModel.isHaveData.value){
+            CustomDialog(
+                title = "We found an unfinished registration process.\n Would you like to continue from where you left off?",
+                onDismiss = viewModel::dismissDialog,
+                onAccept = {
+                    scope.launch {
+                        val toPageFunction = viewModel.getUserInfoFromLocalDataAndGoToPage()
+                        toPageFunction.hashCode()
+                        toPage(toPageFunction)
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun SecondPage(
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     pageClick: (Boolean) -> Unit,
 ) {
     val scrollState = rememberScrollState()
@@ -278,7 +309,7 @@ fun SecondPage(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(60.dp))
-            DateTextField()
+            DateTextField(viewModel)
             Text(
                 text = "Everyone can see your age",
                 textAlign = TextAlign.Center,
@@ -302,6 +333,7 @@ fun SecondPage(
             onClick = {
                 if (condition) {
                     focusState.clearFocus()
+                    viewModel.saveToLocalDatabase()
                     pageClick(true)
                 }
             }
@@ -311,7 +343,7 @@ fun SecondPage(
 
 @Composable
 fun ThirdPage(
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     pageClick: (Boolean) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -346,14 +378,19 @@ fun ThirdPage(
                 .padding(horizontal = 16.dp)
                 .align(BottomCenter),
             enabled = condition,
-            onClick = { if (condition) pageClick(true) }
+            onClick = {
+                if (condition) {
+                    viewModel.saveToLocalDatabase()
+                    pageClick(true)
+                }
+            }
         )
     }
 }
 
 @Composable
 fun FourthPage(
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     pageClick: (Boolean) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -387,14 +424,19 @@ fun FourthPage(
                 .padding(horizontal = 16.dp)
                 .align(BottomCenter),
             enabled = condition,
-            onClick = { if (condition) pageClick(true) },
+            onClick = {
+                if (condition) {
+                    viewModel.saveToLocalDatabase()
+                    pageClick(true)
+                }
+            }
         )
     }
 }
 
 @Composable
 fun FifthPage(
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     pageClick: (Boolean) -> Unit,
 ) {
     Box(
@@ -452,12 +494,18 @@ fun FifthPage(
                 }
             }
         }
+        val condition = viewModel.userInfo.value.relationType.isNotEmpty()
         CustomButton(
             text = "NEXT",
-            enabled = viewModel.userInfo.value.relationType.isNotEmpty(),
+            enabled = condition,
             modifier = Modifier
                 .align(BottomCenter),
-            onClick = { pageClick(true) }
+            onClick = {
+                if (condition){
+                    viewModel.saveToLocalDatabase()
+                    pageClick(true)
+                }
+            }
         )
     }
 }
@@ -466,8 +514,8 @@ fun FifthPage(
 @Composable
 fun SixthPage(
     navController: NavController,
-    viewModel: OnBoardingViewModel = hiltViewModel(),
     context: Context,
+    viewModel: OnBoardingViewModel,
     pageClick: () -> Unit,
 ) {
 //    LaunchedEffect(Unit){

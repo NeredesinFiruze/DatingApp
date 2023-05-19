@@ -10,17 +10,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.datingapp.presentation.on_boarding.OnBoardingViewModel
 import com.example.datingapp.ui.theme.GrayNormal
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NameTextField(
-    viewModel: OnBoardingViewModel = hiltViewModel(),
+    viewModel: OnBoardingViewModel,
     onSearch: ()-> Unit
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by remember { viewModel.name }
+
     TextField(
         value = query,
         onValueChange = { newValue ->

@@ -8,11 +8,13 @@ import android.location.Location
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.datingapp.data.local.UserInfo
+import com.example.datingapp.data.local.repository.UserInfoRepository
 import com.example.datingapp.navigation.Screen
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
@@ -20,12 +22,21 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @HiltViewModel
-class OnBoardingViewModel @Inject constructor() : ViewModel() {
+class OnBoardingViewModel @Inject constructor(
+    private val repository: UserInfoRepository
+) : ViewModel() {
+
+    val name = mutableStateOf("")
+    val birthdate = mutableStateOf(TextFieldValue(text = "DD/MM/YYYY"))
 
     private val _userInfo = mutableStateOf(UserInfo())
     val userInfo = _userInfo
@@ -33,6 +44,10 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
     private val firebaseStorage = FirebaseStorage.getInstance()
     private val database = Firebase.database.getReference("users")
     private val userId = FirebaseAuth.getInstance().currentUser?.uid!!
+
+    init {
+        checkLocalDatabase()
+    }
 
     @SuppressLint("MissingPermission")
     fun setLocation(context: Context) {
@@ -165,6 +180,48 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
         isFrontCamera.value = !isFrontCamera.value
     }
 
+    fun saveToLocalDatabase(){
+        viewModelScope.launch {
+            repository.updateInfo(userInfo.value.toEntity())
+        }
+    }
+
+    suspend fun getUserInfoFromLocalDataAndGoToPage(): Int = suspendCoroutine { continuation ->
+
+        dismissDialog()
+        viewModelScope.launch {
+            val repo = repository.getUserInfo()
+            if (repo.isNotEmpty()) {
+                _userInfo.value = repo[0].toUserInfo()
+                name.value = _userInfo.value.name
+                birthdate.value = birthdate.value.copy(text = _userInfo.value.birthDate)
+            }
+
+            val page = if (_userInfo.value.relationType.isNotEmpty()) 5
+            else if (_userInfo.value.interestedGender.isNotEmpty()) 4
+            else if (_userInfo.value.gender == -1) 3
+            else if (_userInfo.value.birthDate.isNotEmpty()) 2
+            else if (_userInfo.value.name.isNotEmpty()) 1
+            else 0
+
+            continuation.resume(page)
+        }
+    }
+
+    val isHaveData = mutableStateOf(false)
+    private fun checkLocalDatabase() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val hasData = repository.isNameNotEmpty()
+            withContext(Dispatchers.Main) {
+                isHaveData.value = hasData
+            }
+        }
+    }
+
+    fun dismissDialog() {
+        isHaveData.value = false
+    }
+
 //    fun test() {
 //        _userInfo.value = userInfo.value.copy(
 //            uid = userId,
@@ -229,7 +286,12 @@ class OnBoardingViewModel @Inject constructor() : ViewModel() {
                                 .child("userInfo")
                                 .setValue(UserInfo::class.java.cast(_userInfo.value))
                                 .addOnCompleteListener { task ->
-                                    if (task.isSuccessful) navController.navigate(Screen.Home.route)
+                                    if (task.isSuccessful) {
+                                        viewModelScope.launch{
+                                            repository.deleteInfo()
+                                        }
+                                        navController.navigate(Screen.Home.route)
+                                    }
                                     else println("failed")
                                 }
                         }
