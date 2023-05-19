@@ -5,20 +5,49 @@ import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 data class UserInfo(
     val uid: String = "",
     val name: String = "",
     val birthDate: String = "",
-    val picture: List<String?> = listOf(null,null,null, null, null, null),
+    val picture: List<String?> = listOf(null, null, null, null, null, null),
     val gender: Int = -1,
     val interestedGender: List<Int> = emptyList(),
     val interestedAge: IntRange? = null,
     val relationType: List<Int> = emptyList(),
-    val locationInfo: List<Double> = emptyList()
-)
+    val locationInfo: List<Double> = emptyList(),
+){
+    fun toEntity(): UserInfoEntity =
+        UserInfoEntity(
+            name, birthDate, gender, interestedGender, relationType, locationInfo
+        )
 
-enum class Gender{
+}
+
+@Entity("userInfo")
+data class UserInfoEntity(
+    val name: String = "",
+    val birthDate: String = "",
+    val gender: Int = -1,
+    val interestedGender: List<Int> = emptyList(),
+    val relationType: List<Int> = emptyList(),
+    val locationInfo: List<Double> = emptyList(),
+    @PrimaryKey val id: Int = 1
+){
+    fun toUserInfo(): UserInfo =
+        UserInfo(
+            name = name,
+            birthDate = birthDate,
+            gender = gender,
+            interestedGender = interestedGender,
+            relationType = relationType,
+            locationInfo = locationInfo
+        )
+}
+
+enum class Gender {
     MALE, FEMALE
 }
 
@@ -31,7 +60,7 @@ data class BottomNavItem(
     val name: String,
     val route: String,
     val icon: ImageVector,
-    val badgeCount: Int = 0
+    val badgeCount: Int = 0,
 )
 
 val listOfBottomNavItem = listOf(
@@ -56,27 +85,27 @@ val listOfBottomNavItem = listOf(
 val listOfRelationType: List<RelationType> = listOf(
     RelationType(
         emoji = "\uD83D\uDC98",
-        desc = "uzun süreli ilişki"
+        desc = "long-term relationship"
     ),
     RelationType(
         emoji = "\uD83D\uDE0D",
-        desc = "uzun ilişki ama kısa da olur"
+        desc = "long-term but can also be short"
     ),
     RelationType(
         emoji = "\uD83E\uDD42",
-        desc = "kısa ilişki ama uzun da olur"
+        desc = "short-term but can also be long"
     ),
     RelationType(
         emoji = "\uD83C\uDF89",
-        desc = "kısa süreli eğlence"
+        desc = "short time fun"
     ),
     RelationType(
         emoji = "\uD83D\uDC4B",
-        desc = "yeni arkadaşlar"
+        desc = "new friends"
     ),
     RelationType(
         emoji = "\uD83E\uDD14",
-        desc = "henüz karar vermedim"
+        desc = "not decided yet"
     )
 )
 

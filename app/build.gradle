@@ -84,9 +84,6 @@ dependencies {
     //Prefs Datastore
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
 
-    implementation 'com.google.android.gms:play-services-auth:20.5.0'
-    implementation 'com.google.android.gms:play-services-auth-api-phone:18.0.1'
-
     // Icons
     implementation 'androidx.compose.material:material-icons-extended:1.4.2'
 
@@ -104,6 +101,11 @@ dependencies {
 
     //Get Location
     implementation 'com.google.android.gms:play-services-location:21.0.1'
+
+    //Room Database
+    implementation 'androidx.room:room-runtime:2.5.1'
+    implementation 'androidx.room:room-ktx:2.5.1'
+    kapt 'androidx.room:room-compiler:2.5.1'
 
     //Dagger - Hilt
     implementation 'com.google.dagger:hilt-android:2.45'
